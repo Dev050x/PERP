@@ -12,6 +12,7 @@ app.get("/api/v1/health", (_req, res) => {
     })
 });
 
+
 app.use("/api/v1", authRouter);
 app.use("/api/v1", exchangeRouter);
 
