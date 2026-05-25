@@ -1,5 +1,5 @@
-import { env } from "bun";
 import type { NextFunction, Request, Response } from "express";
+import {env} from "../utils/env";
 import jwt from "jsonwebtoken";
 
 export interface TokenPayload {
@@ -19,6 +19,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     };
 
     try {
+        const jwt_secret = env.jwt_secret!;
         const payload = jwt.verify(token, env.jwt_secret!) as TokenPayload;
         req.userId = payload.userId;
         next();
@@ -29,5 +30,12 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
         })
     };
 
+}
 
+export function getUserId(req: Request) {
+    if(!req.userId){
+       throw new Error("User is not authenticated");
+    }
+
+    return req.userId;
 }

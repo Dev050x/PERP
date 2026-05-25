@@ -10,7 +10,9 @@
     "typescript": "^5"
   },
   "exports": {
-    "./auth": "./auth.schema.ts"
+    "./auth": "./auth.schema.ts",
+    "./exchange": "./exchange.schema.ts",
+    "./publisher": "./publisher.type.ts"
   },
   "dependencies": {
     "zod": "^4.4.3"
