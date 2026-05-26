@@ -10,18 +10,18 @@ export class LiquidationManager {
         this.liquidationShorts = new BTree();
     }
 
-    public static get_instance() {
+    public static getInstance() {
         if(!this.instance) {
             this.instance = new LiquidationManager();
         }
         return this.instance;
     }
 
-    public get_long_liquidation() {
+    public getLongLiquidation() {
         return this.liquidationLongs;
     }
 
-    public get_short_liquidation() {
+    public getShortLiquidation() {
         return this.liquidationShorts;
     }
 

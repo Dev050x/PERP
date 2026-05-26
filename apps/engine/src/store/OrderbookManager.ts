@@ -19,11 +19,11 @@ export class OrderBookManager {
         return this.instance;
     }
 
-    public get_orderbook(market: string) {
+    public getOrderbook(market: string) {
         return this.orderbooks.get(market);
     }
 
-    public get_Fills() {
+    public getFills() {
         return this.Fills;
     }
 }
