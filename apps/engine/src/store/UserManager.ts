@@ -1,6 +1,6 @@
 import type { UserBalance, UserDetails } from "types";
 
-const supported_asset = ["SOL", "ETH", "USDC"];
+export const supported_asset = ["SOL", "ETH", "USDC"];
 
 export class UserManager {
     private static instance: UserManager;

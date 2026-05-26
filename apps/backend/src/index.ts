@@ -2,9 +2,12 @@ import express, { type NextFunction, type Request, type Response } from "express
 import { env } from "./utils/env";
 import { authRouter } from "./routes/auth.routes";
 import { exchangeRouter } from "./routes/exchange.routes";
+import { listeningForEngineResponse } from "./utils/engine-client";
 const app = express();
 
 app.use(express.json());
+
+void listeningForEngineResponse();
 
 app.get("/api/v1/health", (_req, res) => {
     res.status(200).json({

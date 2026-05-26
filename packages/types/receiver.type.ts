@@ -1,6 +1,6 @@
 import type { EngineRequest } from "./publisher.type"
 
-export type FromEngine = {
+export type StreamMessage = {
     name: string,
     messages : {
         id: string,
@@ -8,8 +8,11 @@ export type FromEngine = {
     }[],
 };
 
-export type EngineRespose = {
+export type FromStream = StreamMessage[];
+
+export type EngineResponse = {
     correlationId: string,
     ok: boolean,
-    data: unknown
+    data?: unknown,
+    error?: unknown
 }

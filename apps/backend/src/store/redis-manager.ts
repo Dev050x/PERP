@@ -20,8 +20,17 @@ export class RedisManager {
         return this.instance;
     }
 
-    public publishMessage(data: EngineRequest) {
-        this.publisher.xAdd("backend-to-engine", "*", data);
+    public async publishMessage(data: EngineRequest) {
+        await this.publisher.xAdd("backend-to-engine", "*", {
+            message: JSON.stringify(data),
+        });
+    }
+
+    public async readMessage() {
+        return this.receiver.xRead(
+            { key: 'engine-to-backend', id: '$' },
+            { BLOCK: 5000, COUNT: 1 }
+        );
     }
 
 }
