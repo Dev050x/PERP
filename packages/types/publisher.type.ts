@@ -1,17 +1,19 @@
-export type ToEngine = OnRampType | CreateOrderType;
+export type EngineRequest = OnRampType | CreateOrderType;
 
 export type OnRampType = {
-    msg: "Onramp",
+    msg: "OnRamp",
+    correlationID: string,
     userId: string,
 };
 
 export type CreateOrderType = {
     msg: "CreateOrder",
+    correlationID: string,
     userId: string,
     qty: string,
     price?: string,
     margin: string,
     side: "LONG" | "SHORT",
-    type: "limit" | "market"
+    type: "limit" | "market",
 }
 

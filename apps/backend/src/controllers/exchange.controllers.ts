@@ -1,7 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { getUserId } from "../utils/auth";
 import { RedisManager } from "../store/redis-manager";
-import { success } from "zod";
 
 export const createOrder = async (req: Request, res: Response, next: NextFunction) => {
 
@@ -12,8 +11,9 @@ export const onrampUser = async (req: Request, res: Response, next: NextFunction
 
     // need to send to stream engine
     RedisManager.getInstance().publishMessage({
-        msg: "Onramp",
-        userId
+        msg: "OnRamp",
+        userId,
+        correlationID: crypto.randomUUID(),
     });
     //need to get back response  
 

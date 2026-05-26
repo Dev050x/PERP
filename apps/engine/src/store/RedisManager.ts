@@ -1,5 +1,4 @@
 import { createClient, type RedisClientType } from "redis";
-import type { EngineRequest } from "types/publisher";
 
 export class RedisManager {
     private publisher: RedisClientType;
@@ -20,8 +19,12 @@ export class RedisManager {
         return this.instance;
     }
 
-    public publishMessage(data: EngineRequest) {
-        this.publisher.xAdd("backend-to-engine", "*", data);
-    }
+    public ReadDataFromSream() {
+        return this.receiver.xRead(
+            { key: 'backend-to-engine', id: '$' },
+            { BLOCK: 5000, COUNT: 1 }
+        );
+    };;
+
 
 }

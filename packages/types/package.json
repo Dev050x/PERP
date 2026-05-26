@@ -12,9 +12,13 @@
   "exports": {
     "./auth": "./auth.schema.ts",
     "./exchange": "./exchange.schema.ts",
-    "./publisher": "./publisher.type.ts"
+    "./publisher": "./publisher.type.ts",
+    "./receiver": "./receiver.type.ts",
+    ".": "./index.ts"
   },
   "dependencies": {
+    "dbly-linked-list": "^0.3.5",
+    "sorted-btree": "^2.1.0",
     "zod": "^4.4.3"
   }
 }
