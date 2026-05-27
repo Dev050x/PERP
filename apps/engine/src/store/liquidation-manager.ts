@@ -11,6 +11,7 @@ export class LiquidationManager {
     }
 
     public static getInstance() {
+        //helloo
         if(!this.instance) {
             this.instance = new LiquidationManager();
         }

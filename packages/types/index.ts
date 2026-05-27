@@ -35,18 +35,19 @@ export type SortedPrices = {
 export type BestPrices = BTree<string, SortedPrices>;
 
 export type Position = {
-    market: string,
-    orderId: string,
     side: "LONG" | "SHORT",
     qty: bigint,
     margin: bigint,
     liquidationPrice: bigint,
     averagePrice: bigint,
+    pnl: bigint,
+    userId: string,
+    market: string,
 };
 
 export type UserDetails = {
-    orders: Map<string, Order>,
-    positions: Map<string, Position>
+    orders: Map<string, Order>, //orderId and order
+    positions: Map<string, Position> // asset and position
 }
 
 export type Fill = {
@@ -55,7 +56,7 @@ export type Fill = {
     LongUserId: string,
     ShortUserId: string,
     price: bigint,
-    qty: BigIntConstructor,
+    qty: bigint,
     market: string,
 };
 

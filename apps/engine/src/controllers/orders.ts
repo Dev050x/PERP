@@ -3,7 +3,7 @@ import { UserManager } from "../store/user-manager";
 import { SerializableUserBalances, SerializeUserOrder } from "../utils/serialize";
 import { OrderBookManager } from "../store/orderbook-manager";
 import { PRECISION, toBigInt } from "../utils/conversion";
-import type { UserOrder } from "types";
+import type { OrderStatus, UserOrder } from "types";
 
 export function OnRamp(data: EngineRequest) {
     const user = UserManager.getInstance().createUser(data.data.userId);
@@ -26,14 +26,17 @@ export function CreateOrder(data: CreateOrderData) {
         throw new Error("User don't have sufficient balance");
     }
 
-    user_manager.lockUserBalance(user_order.userId, "USDC", toBigInt(user_order.margin, 6));
-    const filledQty = orderbook_manager.matchOrder(user_order);
-    const remaingQty = toBigInt(user_order.qty, PRECISION) - filledQty;
-    const status = (filledQty === 0n) ? "open" : "partiallyFilled";
-    orderbook_manager.updateOrderBook(user_order, remaingQty, orderId);
-    user_manager.addUserOrder(data, orderId, status)
-    const order = SerializeUserOrder(user_manager.getUserOrder(data.userId, orderId)!);
 
+    user_manager.lockUserBalance(user_order.userId, "USDC", toBigInt(user_order.margin, 6));
+    const remainQty = orderbook_manager.matchOrder(user_order, orderId);
+    const filledQty = toBigInt(user_order.qty, PRECISION) - remainQty;
+    const status: OrderStatus = (filledQty === toBigInt(data.qty, PRECISION)) ? "Filled" : (filledQty === 0n ? "open" : "partiallyFilled");
+    if (status !== "Filled") {
+        orderbook_manager.updateOrderBook(user_order, remainQty, orderId);
+    }
+    user_manager.addUserOrder(data, orderId, status);
+    console.log("user orders: ", user_manager.getUserOrders(data.userId));
+    const order = SerializeUserOrder(user_manager.getUserOrder(data.userId, orderId)!);
     return {
         order,
     }

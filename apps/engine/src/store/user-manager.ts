@@ -1,8 +1,11 @@
-import type { Order, OrderStatus, UserBalance, UserDetails, UserOrder } from "types";
+import type { Order, OrderStatus, Position, UserBalance, UserDetails, UserOrder } from "types";
 import { PRECISION, toBigInt } from "../utils/conversion";
+import { calculateAveragePrice, calculateLiquidationPrice, calculateUnrealPnl } from "../utils/calculation";
 
 export const supported_asset = ["SOL", "ETH", "USDC"];
 const HARD_CORDED_USER = "c43838a8-e271-4599-8b16-696296c02869";
+const HARD_CORDED_USER_1 = "ac896fbc-02fd-4324-ba13-45e9003d4c50";
+const HARD_CORDED_USER_2 = "91245d45-b1ed-4b74-a0d5-2a1a17326052";
 
 export class UserManager {
     private static instance: UserManager;
@@ -13,6 +16,8 @@ export class UserManager {
         this.Balances = new Map();
         this.users = new Map();
         this.initializeUserBalance(HARD_CORDED_USER);
+        this.initializeUserBalance(HARD_CORDED_USER_1);
+        this.initializeUserBalance(HARD_CORDED_USER_2);
     }
 
     public static getInstance() {
@@ -42,6 +47,10 @@ export class UserManager {
         return this.users.get(userId)?.orders;
     }
 
+    public getUserOrder(userId: string, orderId: string) {
+        return this.getUser(userId)?.orders.get(orderId);
+    }
+
     public getUserPositions(userId: string) {
         return this.users.get(userId)?.positions;
     }
@@ -51,25 +60,91 @@ export class UserManager {
             orders: new Map(),
             positions: new Map(),
         });
-        const user_balance = this.Balances.set(userId, {});
+        const userBal = this.Balances.set(userId, {});
         return user;
     };
 
+    public getUsers() {
+        return this.users;
+    }
+
+    public getBalances() {
+        return this.Balances;
+    }
+
+
+    public closeUserPosition(position: Position, price: bigint) {
+        const unPnl = calculateUnrealPnl(position, price);
+        const relFund = position.margin + unPnl;
+        const userBal = this.getUserBalances(position.userId)![position.market]!;
+        userBal.availableBalance += relFund < 0n ? 0n : relFund;
+        userBal.lockedBalance -= (position.margin);
+        this.getUser(position.userId)?.positions.delete(position.market);
+    }
+
+    public createUserPosition(userId: string, averagePrice: bigint, market: string, qty: bigint, side: "LONG" | "SHORT", margin: bigint) {
+        const user = this.getUser(userId)!;
+        const userBal = this.getUserBalances(userId)![market]!;
+        const exisPos = user.positions.get(market);
+        if (exisPos) {
+            //same side
+            if (exisPos.side === side) {
+                const newAvgPrice = calculateAveragePrice(exisPos.averagePrice, exisPos.qty, averagePrice, qty);
+                const newLiquidPrice = calculateLiquidationPrice(newAvgPrice, exisPos.qty + qty, exisPos.margin + margin, side);
+                exisPos.qty += qty;
+                exisPos.margin += margin;
+                exisPos.averagePrice = newAvgPrice;
+                exisPos.liquidationPrice = newLiquidPrice;
+                //TODO: calculate pnl
+            } else {
+                if (exisPos.qty < qty) {
+                    const newQty = qty - exisPos.qty;
+                    this.closeUserPosition(exisPos, averagePrice);
+                    const newMargin = (margin * newQty) / qty;
+                    this.createUserPosition(userId, averagePrice, market, newQty, side, margin);
+                } else {
+                    const releasedMargin = (exisPos.margin * qty) / exisPos.qty;
+                    const realizedPnl = exisPos.side === 'LONG'
+                        ? (averagePrice - exisPos.averagePrice) * qty
+                        : (exisPos.averagePrice - averagePrice) * qty;
+                    const relFund = releasedMargin + realizedPnl;
+                    userBal.availableBalance += (relFund < 0 ? 0n: relFund);
+                    userBal.lockedBalance -= releasedMargin;
+                    exisPos.qty -= qty;
+                    exisPos.margin -= releasedMargin;
+                }
+            }
+
+        } else {
+            user.positions.set(market, {
+                side,
+                qty,
+                margin,
+                liquidationPrice: calculateLiquidationPrice(averagePrice, qty, margin, side),
+                averagePrice,
+                pnl: 0n,
+                userId,
+                market
+            });
+            console.log("user position: ", calculateLiquidationPrice(averagePrice, qty, margin, side));
+        }
+    }
+
     public initializeUserBalance(userId: string) {
-        const user_balance = this.Balances.set(userId, {}).get(userId);
-        if (!user_balance) {
+        const userBal = this.Balances.set(userId, {}).get(userId);
+        if (!userBal) {
             throw new Error("user does not exists");
         }
         for (const asset of supported_asset) {
-            if (!user_balance[asset]) {
-                user_balance[asset] = {
+            if (!userBal[asset]) {
+                userBal[asset] = {
                     availableBalance: 0n,
                     lockedBalance: 0n,
                 };
             }
         }
-        if (user_balance["USDC"]) {
-            user_balance["USDC"].availableBalance += 1000_000_000n;
+        if (userBal["USDC"]) {
+            userBal["USDC"].availableBalance += 10000_000_000n;
         }
         this.users.set(userId, {
             orders: new Map(),
@@ -79,10 +154,10 @@ export class UserManager {
     }
 
     public addAssetInUserBalance(userId: string) {
-        const user_balance = this.getUserBalances(userId)!;
+        const userBal = this.getUserBalances(userId)!;
         for (const asset of supported_asset) {
-            if (!user_balance[asset]) {
-                user_balance[asset] = {
+            if (!userBal[asset]) {
+                userBal[asset] = {
                     availableBalance: 0n,
                     lockedBalance: 0n,
                 }
@@ -91,8 +166,8 @@ export class UserManager {
     };
 
     public hasEnoughBalance(userId: string, margin: bigint, asset: string): boolean {
-        const user_balance = this.getUserBalances(userId)!;
-        if (user_balance[asset] && user_balance[asset].availableBalance >= margin) {
+        const userBal = this.getUserBalances(userId)!;
+        if (userBal[asset] && userBal[asset].availableBalance >= margin) {
             return true;
         }
         return false;
@@ -125,9 +200,4 @@ export class UserManager {
         };
         user.orders.set(orderId, order);
     }
-
-    public getUserOrder(userId: string, orderId: string) {
-        return this.getUser(userId)?.orders.get(orderId);
-    }
-
 }

@@ -1,6 +1,7 @@
 import type { EngineRequest } from "types/publisher";
 import { RedisManager } from "./store/redis-manager";
 import { CreateOrder, InitializeOrderBook, OnRamp } from "./controllers/orders";
+import { debugState } from "./utils/debug";
 
 function handleEngineRequest(data: EngineRequest) {
     if (data.msg === "OnRamp") {
@@ -28,6 +29,7 @@ while (1) {
             ok: true,
             data: response_data,
         });
+        // debugState();
 
     } catch (error) {
         console.log("caught some error for user request");
