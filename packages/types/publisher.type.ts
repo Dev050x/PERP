@@ -1,4 +1,4 @@
-export type EngineRequest = OnRampType | CreateOrderType | InitializeOrderbookType ;
+export type EngineRequest = OnRampType | CreateOrderType | InitializeOrderbookType;
 
 export type OnRampType = {
     msg: "OnRamp",
@@ -11,14 +11,17 @@ export type OnRampType = {
 export type CreateOrderType = {
     msg: "CreateOrder",
     correlationID: string,
-    data: {
-        userId: string,
-        qty: string,
-        price?: string,
-        margin: string,
-        side: "LONG" | "SHORT",
-        type: "limit" | "market",
-    }
+    data: CreateOrderData,
+}
+
+export type CreateOrderData = {
+    userId: string,
+    qty: string,
+    price?: string,
+    margin: string,
+    side: "LONG" | "SHORT",
+    type: "limit" | "market",
+    market: string,
 }
 
 export type InitializeOrderbookType = {

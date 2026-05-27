@@ -3,7 +3,6 @@ import { getUserId } from "../utils/auth";
 import { RedisManager } from "../store/redis-manager";
 import { waitForEngineResponse } from "../utils/pending-response";
 import { createOrderSchema } from "types/exchange";
-import type { ReservedSQL } from "bun";
 
 export const createOrder = async (req: Request, res: Response, next: NextFunction) => {
     const userId = getUserId(req);
@@ -26,18 +25,27 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
             price: parsedBody.data?.price,
             margin: parsedBody.data?.margin,
             side: parsedBody.data?.side,
-            type: parsedBody.data?.type
+            type: parsedBody.data?.type,
+            market: parsedBody.data.market,
         },
         correlationID
     });
 
     const response = await waitForEngineResponse(correlationID, 5000);
-    const data = response.data;
+    console.log("response", response.error);
+
+    if (response.error) {
+        res.status(400).json({
+            success: false,
+            error: response.error ? response.error: "some user error",
+        });
+        return;
+    }
 
     res.status(200).json({
         msg: "Order Placed succefully",
-        data,
-    })
+        data: response.data,
+    });
 
 }
 
@@ -63,7 +71,7 @@ export const onrampUser = async (req: Request, res: Response, next: NextFunction
 
 }
 
-export const initializeOrderbook = async (req: Request, res: Response, next: NextFunction)  => {
+export const initializeOrderbook = async (req: Request, res: Response, next: NextFunction) => {
     //TODO: need to protected by user
     const userId = getUserId(req);
 

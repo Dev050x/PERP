@@ -1,12 +1,12 @@
 import type { EngineRequest } from "types/publisher";
-import { RedisManager } from "./store/RedisManager";
-import { CreateOrder, InitializeOrderBook, OnRamp } from "./controllers/Orders";
+import { RedisManager } from "./store/redis-manager";
+import { CreateOrder, InitializeOrderBook, OnRamp } from "./controllers/orders";
 
 function handleEngineRequest(data: EngineRequest) {
     if (data.msg === "OnRamp") {
         return OnRamp(data);
     }else if(data.msg === "CreateOrder"){
-        CreateOrder(data);
+        return CreateOrder(data.data);
     }else if(data.msg === "InitializeOrderBook") {
         return InitializeOrderBook(data);
     }
@@ -30,6 +30,7 @@ while (1) {
         });
 
     } catch (error) {
+        console.log("caught some error for user request");
         await RedisManager.getInstance().publishData({
             correlationId: received_data.correlationID,
             ok: false,

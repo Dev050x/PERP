@@ -1,6 +1,8 @@
 import type LinkedList from "dbly-linked-list";
 import type BTree from "sorted-btree";
 
+export type OrderStatus = "open" | "partiallyFilled" | "Filled" | "Close";
+
 export type Order = {
     orderId: string,
     userId: string,
@@ -10,16 +12,27 @@ export type Order = {
     margin: bigint,
     type: "limit" | "market",
     price: bigint,
-    status: "open" | "partiallyFilled" | "Filled" | "Close"
+    status: OrderStatus
 };
 
+export type RestingOrders = {
+    availableQty: bigint,
+    orders: LinkedList,     //type of Order
+}
 
 export type orderbook = {
-    bids: BTree<bigint, LinkedList>,
-    asks: BTree<bigint, LinkedList>,
+    bids: Map<bigint, RestingOrders>,
+    asks: Map<bigint, RestingOrders>,
     lastTradedPrice: bigint,
     indexPrice: bigint,
 };
+
+export type SortedPrices = {
+    bids: BTree<bigint, bigint>, //price and qty
+    asks: BTree<bigint, bigint>
+}
+
+export type BestPrices = BTree<string, SortedPrices>;
 
 export type Position = {
     market: string,
@@ -49,4 +62,14 @@ export type Fill = {
 export type UserBalance = {
     availableBalance: bigint,
     lockedBalance: bigint
+}
+
+export type UserOrder = {
+    userId: string,
+    qty: string,
+    price?: string,
+    margin: string,
+    side: "LONG" | "SHORT",
+    type: "limit" | "market",
+    market: string,
 }

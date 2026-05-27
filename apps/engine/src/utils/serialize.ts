@@ -1,4 +1,5 @@
-import type { UserBalance } from "types";
+import type { Order, UserBalance} from "types";
+import { toString } from "./conversion";
 
 export function SerializableUserBalances(
     balances: Record<string, UserBalance>
@@ -9,6 +10,18 @@ export function SerializableUserBalances(
             availableBalance: balances[asset]!.availableBalance.toString(),
             lockedBalance: balances[asset]!.lockedBalance.toString(),
         };
+    }
+    return result;
+};
+
+export function SerializeUserOrder(order: Order): Record<string, string> {
+    const result: Record<string, string> = {};
+    for (const [key, value] of Object.entries(order)) {
+        if(typeof value === "bigint") {
+            result[key] = toString(value);
+            continue;
+        }
+        result[key] = value;
     }
     return result;
 }
