@@ -1,8 +1,8 @@
 import type { CreateOrderData, EngineRequest } from "types/publisher";
 import { UserManager } from "../store/user-manager";
-import { SerializableUserBalances, SerializeUserOrder } from "../utils/serialize";
+import { SerializableUserBalances, SerializeData, serializeFills } from "../utils/serialize";
 import { OrderBookManager } from "../store/orderbook-manager";
-import { PRECISION, toBigInt } from "../utils/conversion";
+import { PRECISION, toBigInt, toString } from "../utils/conversion";
 import type { OrderStatus, UserOrder } from "types";
 
 export function OnRamp(data: EngineRequest) {
@@ -22,22 +22,24 @@ export function CreateOrder(data: CreateOrderData) {
     const user_order: UserOrder = data;
 
     if (!user_manager.hasEnoughBalance(user_order.userId, toBigInt(user_order.margin, 6), "USDC")) {
-        console.log("User don't have sufficient balance");
         throw new Error("User don't have sufficient balance");
     }
 
 
     user_manager.lockUserBalance(user_order.userId, "USDC", toBigInt(user_order.margin, 6));
     const remainQty = orderbook_manager.matchOrder(user_order, orderId);
+    console.log("remaining qty: ", remainQty);
     const filledQty = toBigInt(user_order.qty, PRECISION) - remainQty;
+    console.log("filled qty:", filledQty);
     const status: OrderStatus = (filledQty === toBigInt(data.qty, PRECISION)) ? "Filled" : (filledQty === 0n ? "open" : "partiallyFilled");
+    const fills = (status === "open" ? [] : orderbook_manager.getUserFillsByOrderId(orderId)!);
     if (status !== "Filled") {
         orderbook_manager.updateOrderBook(user_order, remainQty, orderId);
     }
     user_manager.addUserOrder(data, orderId, status);
-    console.log("user orders: ", user_manager.getUserOrders(data.userId));
-    const order = SerializeUserOrder(user_manager.getUserOrder(data.userId, orderId)!);
+    const order = SerializeData(user_manager.getUserOrder(data.userId, orderId)!);
     return {
+        fills: serializeFills(fills),
         order,
     }
 }

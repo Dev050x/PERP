@@ -1,7 +1,10 @@
 import type { Position } from "types";
+import { PRECISION } from "./conversion";
 
-export function calculateMargin(initialQty: bigint, remainQty: bigint, price: bigint): bigint {
-    return (remainQty * price) / initialQty;
+const SCALE = 10n ** BigInt(PRECISION);
+
+export function calculateMargin(initialQty: bigint, remainQty: bigint, margin: bigint): bigint {
+    return (remainQty * margin) / initialQty;
 }
 
 export function getStatus(initialQty: bigint, remainQty: bigint): "open" | "partiallyFilled" {
@@ -12,10 +15,11 @@ export function getStatus(initialQty: bigint, remainQty: bigint): "open" | "part
 }
 
 export function calculateLiquidationPrice(price: bigint, qty: bigint, margin: bigint, side: "LONG" | "SHORT") {
+    console.log(`price ${price} qty: ${qty} margin: ${margin} side: ${side}`);
     if (side === "LONG") {
-        return (((price * qty) / 1000000n) - margin) / qty ;
+        return ((price * qty) - (margin * SCALE)) / qty;
     } else {
-        return (((price * qty) / 100000n) + margin) / qty;
+        return ((price * qty) + (margin * SCALE)) / qty;
     }
 }
 
@@ -24,9 +28,9 @@ export function calculateAveragePrice(prevPrice: bigint, prevQty: bigint, price:
 }
 
 export function calculateUnrealPnl(pos: Position, price: bigint) {
-    if(pos.side === "LONG") {
+    if (pos.side === "LONG") {
         return (price - pos.averagePrice) * pos.qty;
-    }else {
+    } else {
         return (pos.averagePrice - price) * pos.qty;
     }
 }

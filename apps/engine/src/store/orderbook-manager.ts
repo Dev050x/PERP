@@ -5,19 +5,22 @@ import { PRECISION, toBigInt } from "../utils/conversion";
 import { calculateMargin } from "../utils/calculation";
 import LinkedList from "dbly-linked-list";
 
-//this is comment dont by divpatel while learing conversion
 const temp = "divpatel";
 export class OrderBookManager {
     private static instance: OrderBookManager;
     private orderbooks: Map<string, orderbook>;
     private bestPrices: Map<string, SortedPrices>;
     private Fills: Fill[];
+    private fillsByUserId: Map<string, Fill[]>;
+    private fillsByOrderId: Map<string, Fill[]>;
 
 
     private constructor() {
         this.orderbooks = new Map();
         this.Fills = [];
         this.bestPrices = new Map();
+        this.fillsByOrderId = new Map();
+        this.fillsByUserId = new Map();
         this.initializeOrderBooks();
     }
 
@@ -30,7 +33,7 @@ export class OrderBookManager {
 
     public getOrderbook(market: string) {
         if (!this.orderbooks.get(market)) {
-      console.log("orderbook does not exist for this asset");
+            console.log("orderbook does not exist for this asset");
             throw new Error("orderbook does not exist for this asset");
         }
         return this.orderbooks.get(market);
@@ -53,6 +56,16 @@ export class OrderBookManager {
 
     public getBestPrices() {
         return this.bestPrices;
+    }
+
+    public getUserFillsByUserId(userId: string) {
+        if(!this.fillsByUserId.get(userId)) throw new Error("Fills does not exist for this users");
+        return this.fillsByUserId.get(userId);
+    }
+
+    public getUserFillsByOrderId(orderId: string) {
+        if(!this.fillsByOrderId.get(orderId)) throw new Error("Fills does not exist for this order");
+        return this.fillsByOrderId.get(orderId);
     }
 
     public initializeOrderBooks() {
@@ -86,6 +99,17 @@ export class OrderBookManager {
         });
     }
 
+    public createFillforUser(fill: Fill, userId: string, orderId: string) {
+        if (!this.fillsByUserId.get(userId)) {
+            this.fillsByUserId.set(userId, []);
+        }
+        this.fillsByUserId.get(userId)?.push(fill);
+        if (!this.fillsByOrderId.get(orderId)) {
+            this.fillsByOrderId.set(orderId, []);
+        }
+        this.fillsByOrderId.get(orderId)?.push(fill);
+    }
+
     public matchOrder(data: UserOrder, orderId: string): bigint {
         return (data.side === "LONG" ? this.matchLongOrder(data, orderId) : this.matchShortOrder(data, orderId));
     }
@@ -96,10 +120,10 @@ export class OrderBookManager {
         const bestPrices = this.getBestPriceOfAsset(data.market)?.asks!;
         let qty = toBigInt(data.qty, PRECISION);
         const price = toBigInt(data.price!, PRECISION);
-        let averagePrice = 1n;
-        let prevQty = 1n;
+        let averagePrice = 0n;
+        let prevQty = 0n;
         const sorted_prices = [...bestPrices.keys()];
-        for(let i=0; i < sorted_prices.length; i++){
+        for (let i = 0; i < sorted_prices.length; i++) {
             const p = sorted_prices[i]!;
             console.log("chaning price: ", p);
             if (p > price || qty === 0n) {
@@ -113,7 +137,7 @@ export class OrderBookManager {
                 console.log("right now filling qty: ", qty);
                 const order = orders.getHeadNode()?.getData()! as Order;
                 const filledQty = order.qty > qty ? qty : order.qty;
-                this.Fills.push({
+                const fill = {
                     makerId: order.userId,
                     takerId: data.userId,
                     LongUserId: data.userId,
@@ -121,22 +145,30 @@ export class OrderBookManager {
                     price: p,
                     qty: filledQty,
                     market: data.market,
-                });
+                    buyOrderId: orderId,
+                    sellOrderId: order.orderId,
+                };
+                this.Fills.push(fill);
+                this.createFillforUser(fill, order.userId, order.orderId);
+                this.createFillforUser(fill, data.userId, orderId);
                 ask.availableQty -= filledQty;
                 bestPrices.set(p, bestPrices.get(p)! - filledQty);
                 order.qty -= filledQty;
                 qty -= filledQty;
+                averagePrice = ((averagePrice * prevQty) + (filledQty * p)) / (prevQty + filledQty);
+                prevQty = filledQty;
 
                 //status(order)
                 (order.qty === 0n ? order.status === "Filled" : order.status = "partiallyFilled");
                 const user_order = UserManager.getInstance().getUserOrder(order.userId, order.orderId)!;
                 user_order.status = order.status;
+                
                 UserManager.getInstance().createUserPosition(order.userId, p, data.market, filledQty, "SHORT", order.margin);
 
                 (ask.availableQty === 0n ? asks.delete(p) : null);
                 (bestPrices.get(p) === 0n ? bestPrices.delete(p) : null);
                 (order.qty === 0n ? orders.removeFirst() : null);
-                 console.log("After filling qty", qty);
+                console.log("After filling qty", qty);
 
             }
         }
@@ -153,11 +185,10 @@ export class OrderBookManager {
         const bestPrices = this.getBestPriceOfAsset(data.market)?.bids!;
         let qty = toBigInt(data.qty, PRECISION);
         const price = toBigInt(data.price!, PRECISION);
-        let averagePrice = 1n;
-        let prevQty = 1n;
+        let averagePrice = 0n;
+        let prevQty = 0n;
 
         for (const [p, q] of bestPrices.entriesReversed()) {
-            console.log("chaning price: ", p);
             if (p < price || qty === 0n) {
                 break;
             }
@@ -166,10 +197,9 @@ export class OrderBookManager {
             const orders = bid.orders;
 
             while (orders.getHeadNode() && qty) {
-                console.log("Now filling Qty ", qty);
                 const order = orders.getHeadNode()?.getData()! as Order;
                 const filledQty = order.qty > qty ? qty : order.qty;
-                this.Fills.push({
+                const fill = {
                     makerId: order.userId,
                     takerId: data.userId,
                     LongUserId: data.userId,
@@ -177,12 +207,16 @@ export class OrderBookManager {
                     price: p,
                     qty: filledQty,
                     market: data.market,
-                });
+                    buyOrderId: order.orderId,
+                    sellOrderId: orderId,
+                };
+                this.Fills.push(fill);
+                this.createFillforUser(fill, order.userId, order.orderId);
+                this.createFillforUser(fill, data.userId, orderId);
                 bid.availableQty -= filledQty;
                 bestPrices.set(p, bestPrices.get(p)! - filledQty);
                 order.qty -= filledQty;
                 qty -= filledQty;
-
                 averagePrice = ((averagePrice * prevQty) + (filledQty * p)) / (prevQty + filledQty);
                 prevQty = filledQty;
 
@@ -190,6 +224,7 @@ export class OrderBookManager {
                 (order.qty === 0n ? order.status === "Filled" : order.status = "partiallyFilled");
                 const user_order = UserManager.getInstance().getUserOrder(order.userId, order.orderId)!;
                 user_order.status = order.status;
+                console.log(`we're creating the position for user ${order.userId} at average price ${p} and qty ${filledQty} with margin ${order.margin}`);
                 UserManager.getInstance().createUserPosition(order.userId, p, data.market, filledQty, "LONG", order.margin);
 
                 (bid.availableQty === 0n ? bids.delete(p) : null);
@@ -201,6 +236,7 @@ export class OrderBookManager {
         }
 
         if (toBigInt(data.qty, PRECISION) !== qty) {
+            console.log(`we're create the position for user ${data.userId} at average price ${averagePrice} and qty ${toBigInt(data.qty, PRECISION) - qty} with margin ${toBigInt(data.margin, PRECISION)}`);
             UserManager.getInstance().createUserPosition(data.userId, averagePrice, data.market, toBigInt(data.qty, PRECISION) - qty, "SHORT", toBigInt(data.margin, PRECISION));
         }
 
@@ -223,7 +259,7 @@ export class OrderBookManager {
             market: data.market,
             side: "LONG",
             qty: remaingQty,
-            margin: calculateMargin(initialQty, remaingQty, price),
+            margin: calculateMargin(initialQty, remaingQty, toBigInt(data.margin, PRECISION)),
             type: "limit",
             price: price,
             status: initialQty === remaingQty ? "open" : "partiallyFilled"
@@ -263,7 +299,7 @@ export class OrderBookManager {
             market: data.market,
             side: "SHORT",
             qty: remaingQty,
-            margin: calculateMargin(initialQty, remaingQty, price),
+            margin: calculateMargin(initialQty, remaingQty, toBigInt(data.margin, PRECISION)),
             type: "limit",
             price: price,
             status: initialQty === remaingQty ? "open" : "partiallyFilled"

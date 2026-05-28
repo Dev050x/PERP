@@ -1,4 +1,4 @@
-import type { Order, UserBalance} from "types";
+import type { Fill, Order, UserBalance } from "types";
 import { toString } from "./conversion";
 
 export function SerializableUserBalances(
@@ -14,14 +14,30 @@ export function SerializableUserBalances(
     return result;
 };
 
-export function SerializeUserOrder(order: Order): Record<string, string> {
+export function SerializeData(data: Order | Fill): Record<string, string> {
     const result: Record<string, string> = {};
-    for (const [key, value] of Object.entries(order)) {
-        if(typeof value === "bigint") {
+    for (const [key, value] of Object.entries(data)) {
+        if (typeof value === "bigint") {
             result[key] = toString(value);
             continue;
         }
         result[key] = value;
     }
     return result;
+}
+
+export function serializeFills(fills: Fill[]): Record<string, string>[] {
+    const serFills: Record<string, string>[] = [];
+    for (const fill of fills) {
+        let serFill: Record<string, string> = {};
+        for (const [key, value] of Object.entries(fill)) {
+            if (typeof value === "bigint") {
+                serFill[key] = toString(value);
+                continue;
+            }
+            serFill[key] = value;
+        }
+        serFills.push(serFill);
+    }
+    return serFills;
 }

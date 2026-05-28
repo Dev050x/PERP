@@ -116,6 +116,7 @@ export class UserManager {
             }
 
         } else {
+            console.log(`price: ${averagePrice} market: ${market} qty: ${qty} margin: ${margin} `);
             user.positions.set(market, {
                 side,
                 qty,

@@ -51,6 +51,8 @@ export type UserDetails = {
 }
 
 export type Fill = {
+    sellOrderId: string,
+    buyOrderId: string,
     makerId: string,
     takerId: string,
     LongUserId: string,

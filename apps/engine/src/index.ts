@@ -29,7 +29,7 @@ while (1) {
             ok: true,
             data: response_data,
         });
-        // debugState();
+        debugState();
 
     } catch (error) {
         console.log("caught some error for user request");
