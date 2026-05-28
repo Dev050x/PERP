@@ -29,15 +29,7 @@ export function SerializeData(data: Order | Fill): Record<string, string> {
 export function serializeFills(fills: Fill[]): Record<string, string>[] {
     const serFills: Record<string, string>[] = [];
     for (const fill of fills) {
-        let serFill: Record<string, string> = {};
-        for (const [key, value] of Object.entries(fill)) {
-            if (typeof value === "bigint") {
-                serFill[key] = toString(value);
-                continue;
-            }
-            serFill[key] = value;
-        }
-        serFills.push(serFill);
+        serFills.push(SerializeData(fill));
     }
     return serFills;
 }
