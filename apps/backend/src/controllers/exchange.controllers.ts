@@ -172,7 +172,7 @@ export const getPostiion = async (req: Request, res: Response) => {
 
 }
 
-export const getOpenOrders = async (req: Request, res: Response) => {
+export const getOrders = async (req: Request, res: Response) => {
     const userId = getUserId(req);
     const correlationID = crypto.randomUUID();
     const parsedBody = getOrdersSchema.safeParse(req.params);
@@ -182,6 +182,42 @@ export const getOpenOrders = async (req: Request, res: Response) => {
         return;
     }
 
+
+    await RedisManager.getInstance().publishMessage({
+        msg: "GetOpenOrders",
+        data: {
+            userId,
+            marketId: parsedBody.data.marketId
+
+        },
+        correlationID
+    });
+
+    const response = await waitForEngineResponse(correlationID, 5000);
+
+    if (response.error) {
+        res.status(400).json({
+            success: false,
+            error: response.error ? response.error : "some user error",
+        });
+        return;
+    }
+
+    res.status(200).json({
+        data: response.data,
+    });
+}
+
+export const getOpenOrders = async (req: Request, res: Response) => {
+    const userId = getUserId(req);
+    const parsedBody = getOrdersSchema.safeParse(req.params);
+
+    if (!parsedBody.success) {
+        sendValidationError(res, parsedBody.error);
+        return;
+    }
+
+    const correlationID = crypto.randomUUID();
 
     await RedisManager.getInstance().publishMessage({
         msg: "GetOpenOrders",

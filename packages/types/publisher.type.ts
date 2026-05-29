@@ -1,4 +1,4 @@
-export type EngineRequest = OnRampType | CreateOrderType | InitializeOrderbookType | CancelOrderType | GetPositionType | GetOpenOrders;
+export type EngineRequest = OnRampType | CreateOrderType | InitializeOrderbookType | CancelOrderType | GetPositionType | GetOpenOrders | GetOrders;
 
 export type OnRampType = {
     msg: "OnRamp",
@@ -36,6 +36,12 @@ export type GetPositionData = {
     marketId: string,
 }
 
+export type GetOrders = {
+    msg: "GetOrders",
+    correlationID: string,
+    data: GetOpenOrdersData,
+}
+
 export type GetOpenOrders = {
     msg: "GetOpenOrders",
     correlationID: string,
@@ -43,6 +49,11 @@ export type GetOpenOrders = {
 }
 
 export type GetOpenOrdersData = {
+    userId: string,
+    marketId: string
+}
+
+export type GetOrdersData = {
     userId: string,
     marketId: string
 }
