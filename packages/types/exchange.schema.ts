@@ -16,7 +16,7 @@ export const createOrderSchema = z.discriminatedUnion("type", [
     z.object({
         side: z.enum(["LONG", "SHORT"]),
         type: z.literal("limit"),
-        price: precisionString(PRECISION),
+        price: precisionString(PRECISION).optional(),
         qty: precisionString(PRECISION),
         margin: precisionString(PRECISION),
         market: z.string(),
@@ -24,7 +24,7 @@ export const createOrderSchema = z.discriminatedUnion("type", [
     z.object({
         side: z.enum(["LONG", "SHORT"]),
         type: z.literal("market"),
-        price: precisionString(PRECISION),
+        price: precisionString(PRECISION).optional(),
         qty: precisionString(PRECISION),
         margin: precisionString(PRECISION),
         market: z.string(),

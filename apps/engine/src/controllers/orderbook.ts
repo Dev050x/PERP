@@ -1,5 +1,5 @@
 import { SerializableUserBalances, SerializeData, serializeFills } from "../utils/serialize";
-import type { CancelOrderData, CancelOrderType, CreateOrderData, EngineRequest, GetPositionData } from "types/publisher";
+import type { CancelOrderData, CancelOrderType, CreateOrderData, EngineRequest } from "types/publisher";
 import { PRECISION, toBigInt, toString } from "../utils/conversion";
 import { OrderBookManager } from "../store/orderbook-manager";
 import type { OrderStatus, UserOrder } from "types";

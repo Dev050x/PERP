@@ -70,16 +70,22 @@ export class OrderBookManager {
 
     public getMarketPrice(userId: string, slippage: string, side: "LONG" | "SHORT", market: string) {
         const bestPrice = this.getBestPriceOfAsset(market)!;
-        if(side == "LONG" ) {
-            const bestBids = bestPrice.bids;
-            for(const [key,value] of bestBids.entries()) {
-                return key + (key * toBigInt(slippage, PRECISION)) / 100n * 10_000_000n;
+        if (side == "LONG") {
+            const bestAsks = bestPrice.asks;
+            if (bestAsks.size === 0) {
+                throw new Error("No sell order is available");
+            }
+            for (const [key, value] of bestAsks.entries()) {
+                return key;
             }
         }
-        if(side == "SHORT" ) {
-            const bestAsks = bestPrice.asks;
-            for(const [key,value] of bestAsks.entries()) {
-                return key + (key * toBigInt(slippage, PRECISION)) / 100n * 10_000_000n;
+        if (side == "SHORT") {
+            const bestBids = bestPrice.bids;
+            if (bestBids.size === 0) {
+                throw new Error("No buy order is available");
+            }
+            for (const [key, value] of bestBids.entries()) {
+                return key;
             }
         }
     }
