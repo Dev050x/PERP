@@ -1,7 +1,7 @@
 import type LinkedList from "dbly-linked-list";
 import type BTree from "sorted-btree";
 
-export type OrderStatus = "open" | "partiallyFilled" | "Filled" | "Close";
+export type OrderStatus = "open" | "partiallyFilled" | "Filled" | "Close" | "Cancel";
 
 export type Order = {
     orderId: string,

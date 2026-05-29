@@ -59,12 +59,12 @@ export class OrderBookManager {
     }
 
     public getUserFillsByUserId(userId: string) {
-        if(!this.fillsByUserId.get(userId)) throw new Error("Fills does not exist for this users");
+        if (!this.fillsByUserId.get(userId)) throw new Error("Fills does not exist for this users");
         return this.fillsByUserId.get(userId);
     }
 
     public getUserFillsByOrderId(orderId: string) {
-        if(!this.fillsByOrderId.get(orderId)) throw new Error("Fills does not exist for this order");
+        if (!this.fillsByOrderId.get(orderId)) throw new Error("Fills does not exist for this order");
         return this.fillsByOrderId.get(orderId);
     }
 
@@ -162,7 +162,7 @@ export class OrderBookManager {
                 (order.qty === 0n ? order.status === "Filled" : order.status = "partiallyFilled");
                 const user_order = UserManager.getInstance().getUserOrder(order.userId, order.orderId)!;
                 user_order.status = order.status;
-                
+
                 UserManager.getInstance().createUserPosition(order.userId, p, data.market, filledQty, "SHORT", order.margin);
 
                 (ask.availableQty === 0n ? asks.delete(p) : null);
@@ -241,6 +241,58 @@ export class OrderBookManager {
         }
 
         return qty;
+    }
+
+    public cancelOrder(userId: string, orderId: string) {
+        const order = UserManager.getInstance().getUserOrder(userId, orderId);
+        if (!order) {
+            throw new Error("Order does not exists");
+        }
+        (order.side === "LONG" ? this.cancelBid(order) : this.cancelAsk(order));
+    }
+
+    public cancelBid(order: Order) {
+        const bids = OrderBookManager.getInstance().getOrderbook(order.market)!.bids;
+        const bestPrices = this.getBestPriceOfAsset(order.market)!.bids;
+
+        const bid = bids.get(order.price)!;
+        const index = bid.orders.indexOf(order);
+        if (index !== -1) {
+            bid.orders.removeAt(index);
+            bid.availableQty -= order.qty;
+            bid.availableQty === 0n ? bids.delete(order.price) : null;
+
+            bestPrices.set(order.price, bestPrices.get(order.price)! - order.qty!);
+            (bestPrices.get(order.price) === 0n ? bestPrices.delete(order.price) : null);
+
+            const userDetail = UserManager.getInstance().getUser(order.userId)!;
+            userDetail.orders.get(order.orderId)!.status = "Cancel";
+            const userAssetBalance = UserManager.getInstance().getUserBalances(order.userId)!["USDC"]!;
+            userAssetBalance.availableBalance += order.margin;
+            userAssetBalance.lockedBalance -= order.margin;
+        }
+    }
+
+    public cancelAsk(order: Order) {
+        const asks = OrderBookManager.getInstance().getOrderbook(order.market)!.asks;
+        const bestPrices = this.getBestPriceOfAsset(order.market)!.asks;
+
+        const ask = asks.get(order.price)!;
+        const index = ask.orders.indexOf(order);
+        if (index !== -1) {
+            ask.orders.removeAt(index);
+            ask.availableQty -= order.qty;
+            ask.availableQty === 0n ? asks.delete(order.price) : null;
+
+            bestPrices.set(order.price, bestPrices.get(order.price)! - order.qty!);
+            (bestPrices.get(order.price) === 0n ? bestPrices.delete(order.price) : null);
+
+            const userDetail = UserManager.getInstance().getUser(order.userId)!;
+            userDetail.orders.get(order.orderId)!.status = "Cancel";
+            const userAssetBalance = UserManager.getInstance().getUserBalances(order.userId)!["USDC"]!;
+            userAssetBalance.availableBalance += order.margin;
+            userAssetBalance.lockedBalance -= order.margin;
+        }
     }
 
     public updateOrderBook(data: UserOrder, remainQty: bigint, orderId: string) {

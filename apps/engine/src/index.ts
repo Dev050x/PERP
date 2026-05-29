@@ -1,6 +1,6 @@
 import type { EngineRequest } from "types/publisher";
 import { RedisManager } from "./store/redis-manager";
-import { CreateOrder, InitializeOrderBook, OnRamp } from "./controllers/orders";
+import { CancelOrder, CreateOrder, InitializeOrderBook, OnRamp } from "./controllers/orders";
 import { debugState } from "./utils/debug";
 
 function handleEngineRequest(data: EngineRequest) {
@@ -10,6 +10,8 @@ function handleEngineRequest(data: EngineRequest) {
         return CreateOrder(data.data);
     }else if(data.msg === "InitializeOrderBook") {
         return InitializeOrderBook(data);
+    }else if(data.msg === "CancelOrder") {
+        return CancelOrder(data.data);
     }
 }
 

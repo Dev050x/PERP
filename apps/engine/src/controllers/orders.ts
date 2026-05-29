@@ -1,5 +1,5 @@
 import { SerializableUserBalances, SerializeData, serializeFills } from "../utils/serialize";
-import type { CreateOrderData, EngineRequest } from "types/publisher";
+import type { CancelOrderData, CancelOrderType, CreateOrderData, EngineRequest } from "types/publisher";
 import { PRECISION, toBigInt, toString } from "../utils/conversion";
 import { OrderBookManager } from "../store/orderbook-manager";
 import type { OrderStatus, UserOrder } from "types";
@@ -33,11 +33,22 @@ export function CreateOrder(data: CreateOrderData) {
     if (status !== "Filled") {
         orderbookManager.updateOrderBook(userOrder, remainQty, orderId);
     }
-    
+
     userManager.addUserOrder(data, orderId, status);
     const order = SerializeData(userManager.getUserOrder(data.userId, orderId)!);
+    
     return {
         fills: serializeFills(fills),
+        order,
+    }
+}
+
+export function CancelOrder(data: CancelOrderData) {
+    const orderbookManager = OrderBookManager.getInstance();
+    const userManager = UserManager.getInstance();
+    orderbookManager.cancelOrder(data.userId, data.orderId);
+    const order = SerializeData(userManager.getUserOrder(data.userId, data.orderId)!);
+    return {
         order,
     }
 }

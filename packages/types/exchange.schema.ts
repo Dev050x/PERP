@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { string } from "zod";
 
 const PRECISION = 6;
 
@@ -30,3 +30,8 @@ export const createOrderSchema = z.discriminatedUnion("type", [
         market: z.string(),
     })
 ]);
+
+
+export const deleteOrderSchema = z.object({
+    orderId: string(),
+})

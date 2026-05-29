@@ -2,7 +2,8 @@ import type { NextFunction, Request, Response } from "express";
 import { getUserId } from "../utils/auth";
 import { RedisManager } from "../store/redis-manager";
 import { waitForEngineResponse } from "../utils/pending-response";
-import { createOrderSchema } from "types/exchange";
+import { createOrderSchema, deleteOrderSchema } from "types/exchange";
+import { sendValidationError } from "../utils/validation";
 
 export const createOrder = async (req: Request, res: Response, next: NextFunction) => {
     const userId = getUserId(req);
@@ -37,13 +38,50 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
     if (response.error) {
         res.status(400).json({
             success: false,
-            error: response.error ? response.error: "some user error",
+            error: response.error ? response.error : "some user error",
         });
         return;
     }
 
     res.status(200).json({
         msg: "Order Placed succefully",
+        data: response.data,
+    });
+
+}
+
+export const deleteOrder = async (req: Request, res: Response) => {
+    const userId = getUserId(req);
+    const parsedBody = deleteOrderSchema.safeParse(req.query);
+
+    if (!parsedBody.success) {
+        sendValidationError(res, parsedBody.error);
+        return;
+    }
+
+    const correlationID = crypto.randomUUID();
+
+    await RedisManager.getInstance().publishMessage({
+        msg: "CancelOrder",
+        data: {
+            userId,
+            orderId: parsedBody.data.orderId
+        },
+        correlationID
+    });
+
+    const response = await waitForEngineResponse(correlationID, 5000);
+
+    if (response.error) {
+        res.status(400).json({
+            success: false,
+            error: response.error ? response.error : "some user error",
+        });
+        return;
+    }
+
+    res.status(200).json({
+        msg: "Order Canelled",
         data: response.data,
     });
 
