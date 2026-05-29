@@ -243,3 +243,30 @@ export const getOpenOrders = async (req: Request, res: Response) => {
         data: response.data,
     });
 }
+
+export const getFills = async (req: Request, res: Response) => {
+    const userId = getUserId(req);
+    const correlationID = crypto.randomUUID();
+
+    await RedisManager.getInstance().publishMessage({
+        msg: "GetFills",
+        data: {
+            userId,
+        },
+        correlationID
+    });
+
+    const response = await waitForEngineResponse(correlationID, 5000);
+
+    if (response.error) {
+        res.status(400).json({
+            success: false,
+            error: response.error ? response.error : "some user error",
+        });
+        return;
+    }
+
+    res.status(200).json({
+        data: response.data,
+    });
+}

@@ -4,6 +4,7 @@ import { CancelOrder, CreateOrder,InitializeOrderBook, OnRamp } from "./controll
 import { debugState } from "./utils/debug";
 import { GetPosition } from "./controllers/getPosition";
 import { getOpenOrders, getOrders } from "./controllers/getOrders";
+import { getFill } from "./controllers/getFills";
 
 function handleEngineRequest(data: EngineRequest) {
     if (data.msg === "OnRamp") {
@@ -20,6 +21,8 @@ function handleEngineRequest(data: EngineRequest) {
         return getOrders(data.data)
     }else if(data.msg === "GetOpenOrders"){
         return getOpenOrders(data.data)
+    }else if(data.msg === "GetFills") {
+        return getFill(data.data);
     }
 }
 
