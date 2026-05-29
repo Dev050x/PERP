@@ -68,6 +68,22 @@ export class OrderBookManager {
         return this.fillsByOrderId.get(orderId);
     }
 
+    public getMarketPrice(userId: string, slippage: string, side: "LONG" | "SHORT", market: string) {
+        const bestPrice = this.getBestPriceOfAsset(market)!;
+        if(side == "LONG" ) {
+            const bestBids = bestPrice.bids;
+            for(const [key,value] of bestBids.entries()) {
+                return key + (key * toBigInt(slippage, PRECISION)) / 100n * 10_000_000n;
+            }
+        }
+        if(side == "SHORT" ) {
+            const bestAsks = bestPrice.asks;
+            for(const [key,value] of bestAsks.entries()) {
+                return key + (key * toBigInt(slippage, PRECISION)) / 100n * 10_000_000n;
+            }
+        }
+    }
+
     public initializeOrderBooks() {
         for (const asset of supported_asset) {
             if (!this.orderbooks.get(asset)) {

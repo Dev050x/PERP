@@ -75,4 +75,5 @@ export type UserOrder = {
     side: "LONG" | "SHORT",
     type: "limit" | "market",
     market: string,
+    slippage?: string,
 }

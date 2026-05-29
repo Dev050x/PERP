@@ -76,6 +76,7 @@ export type CreateOrderData = {
     side: "LONG" | "SHORT",
     type: "limit" | "market",
     market: string,
+    slippage?: string,
 }
 
 export type InitializeOrderbookType = {
