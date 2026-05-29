@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { getUserId } from "../utils/auth";
 import { RedisManager } from "../store/redis-manager";
 import { waitForEngineResponse } from "../utils/pending-response";
-import { createOrderSchema, deleteOrderSchema } from "types/exchange";
+import { createOrderSchema, deleteOrderSchema, getPositionSchema } from "types/exchange";
 import { sendValidationError } from "../utils/validation";
 
 export const createOrder = async (req: Request, res: Response, next: NextFunction) => {
@@ -132,4 +132,70 @@ export const initializeOrderbook = async (req: Request, res: Response, next: Nex
         markets: data,
     })
 
+}
+
+export const getPostiion = async (req: Request, res: Response) => {
+    const userId = getUserId(req);
+    const parsedBody = getPositionSchema.safeParse(req.params);
+
+    if (!parsedBody.success) {
+        sendValidationError(res, parsedBody.error);
+        return;
+    }
+    const marketId = parsedBody.data.marketId;
+    const correlationID = crypto.randomUUID();
+    console.log("parsed data: ", parsedBody.data);
+    await RedisManager.getInstance().publishMessage({
+        msg: "GetPosition",
+        data: {
+            userId,
+            marketId: marketId,
+        },
+        correlationID
+    });
+
+    const response = await waitForEngineResponse(correlationID, 5000);
+    console.log("response: ", response);
+
+    if (response.error) {
+        res.status(400).json({
+            success: false,
+            error: response.error ? response.error : "some user error",
+        });
+        return;
+    }
+
+    res.status(200).json({
+        msg: "here is the position",
+        data: response.data,
+    });
+
+}
+
+export const GetOpenOrders = async (req: Request, res: Response) => {
+    const userId = getUserId(req);
+    const correlationID = crypto.randomUUID();
+
+    await RedisManager.getInstance().publishMessage({
+        msg: "GetOpenOrders",
+        data: {
+            userId,
+        },
+        correlationID
+    });
+
+    const response = await waitForEngineResponse(correlationID, 5000);
+
+    if (response.error) {
+        res.status(400).json({
+            success: false,
+            error: response.error ? response.error : "some user error",
+        });
+        return;
+    }
+
+    res.status(200).json({
+        msg: "Order Canelled",
+        data: response.data,
+    });
 }

@@ -1,4 +1,4 @@
-import type { Fill, Order, UserBalance } from "types";
+import type { Fill, Order, Position, UserBalance } from "types";
 import { toString } from "./conversion";
 
 export function SerializableUserBalances(
@@ -14,7 +14,7 @@ export function SerializableUserBalances(
     return result;
 };
 
-export function SerializeData(data: Order | Fill): Record<string, string> {
+export function SerializeData(data: Order | Fill | Position): Record<string, string> {
     const result: Record<string, string> = {};
     for (const [key, value] of Object.entries(data)) {
         if (typeof value === "bigint") {

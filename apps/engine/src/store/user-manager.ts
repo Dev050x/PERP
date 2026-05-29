@@ -52,7 +52,11 @@ export class UserManager {
     }
 
     public getUserPositions(userId: string) {
-        return this.users.get(userId)?.positions;
+        const userPositions = this.users.get(userId)?.positions;
+        if(!userPositions){
+            throw new Error("User does not have any positions");
+        }
+        return userPositions;
     }
 
     public createUser(userId: string) {

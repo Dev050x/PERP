@@ -35,3 +35,7 @@ export const createOrderSchema = z.discriminatedUnion("type", [
 export const deleteOrderSchema = z.object({
     orderId: string(),
 })
+
+export const getPositionSchema = z.object({
+    marketId: string(),
+})
