@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { getUserId } from "../utils/auth";
 import { RedisManager } from "../store/redis-manager";
 import { waitForEngineResponse } from "../utils/pending-response";
-import { createOrderSchema, deleteOrderSchema, getPositionSchema } from "types/exchange";
+import { createOrderSchema, deleteOrderSchema, getOrdersSchema, getPositionSchema } from "types/exchange";
 import { sendValidationError } from "../utils/validation";
 
 export const createOrder = async (req: Request, res: Response, next: NextFunction) => {
@@ -172,14 +172,23 @@ export const getPostiion = async (req: Request, res: Response) => {
 
 }
 
-export const GetOpenOrders = async (req: Request, res: Response) => {
+export const getOpenOrders = async (req: Request, res: Response) => {
     const userId = getUserId(req);
     const correlationID = crypto.randomUUID();
+    const parsedBody = getOrdersSchema.safeParse(req.params);
+
+    if (!parsedBody.success) {
+        sendValidationError(res, parsedBody.error);
+        return;
+    }
+
 
     await RedisManager.getInstance().publishMessage({
         msg: "GetOpenOrders",
         data: {
             userId,
+            marketId: parsedBody.data.marketId
+
         },
         correlationID
     });
@@ -195,7 +204,6 @@ export const GetOpenOrders = async (req: Request, res: Response) => {
     }
 
     res.status(200).json({
-        msg: "Order Canelled",
         data: response.data,
     });
 }

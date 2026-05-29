@@ -44,6 +44,9 @@ export class UserManager {
     }
 
     public getUserOrders(userId: string) {
+        if(!this.users.get(userId)?.orders){
+            throw new Error("user doesn't have any open orders");
+        }
         return this.users.get(userId)?.orders;
     }
 

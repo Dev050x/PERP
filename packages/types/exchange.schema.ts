@@ -39,3 +39,7 @@ export const deleteOrderSchema = z.object({
 export const getPositionSchema = z.object({
     marketId: string(),
 })
+
+export const getOrdersSchema = z.object({
+    marketId: string(),
+});

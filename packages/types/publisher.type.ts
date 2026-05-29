@@ -39,9 +39,12 @@ export type GetPositionData = {
 export type GetOpenOrders = {
     msg: "GetOpenOrders",
     correlationID: string,
-    data: {
-        userId: string,
-    }
+    data: GetOpenOrdersData,
+}
+
+export type GetOpenOrdersData = {
+    userId: string,
+    marketId: string
 }
 
 export type CreateOrderData = {
