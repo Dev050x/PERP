@@ -1,4 +1,4 @@
-export const PRECISION = 6;
+export const PRECISION = 8;
 
 export function toBigInt(value: string, precision: number): bigint {
     const [whole, fraction = ""] = value.split(".");

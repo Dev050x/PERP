@@ -147,7 +147,7 @@ export class OrderBookManager {
         const sorted_prices = [...bestPrices.keys()];
         for (let i = 0; i < sorted_prices.length; i++) {
             const p = sorted_prices[i]!;
-            console.log("chaning price: ", p);
+            // console.log("chaning price: ", p);
             if (p > price || qty === 0n) {
                 break;
             }
@@ -156,7 +156,7 @@ export class OrderBookManager {
             const orders = ask.orders;
 
             while (!orders.isEmpty() && qty !== 0n) {
-                console.log("right now filling qty: ", qty);
+                // console.log("right now filling qty: ", qty);
                 const order = orders.getHeadNode()?.getData()! as Order;
                 const filledQty = order.qty > qty ? qty : order.qty;
                 const fill = {
@@ -190,7 +190,7 @@ export class OrderBookManager {
                 (ask.availableQty === 0n ? asks.delete(p) : null);
                 (bestPrices.get(p) === 0n ? bestPrices.delete(p) : null);
                 (order.qty === 0n ? orders.removeFirst() : null);
-                console.log("After filling qty", qty);
+                // console.log("After filling qty", qty);
 
             }
         }
@@ -252,7 +252,7 @@ export class OrderBookManager {
                 (bid.availableQty === 0n ? bids.delete(p) : null);
                 (bestPrices.get(p) === 0n ? bestPrices.delete(p) : null);
                 (order.qty === 0n ? orders.removeFirst() : null);
-                console.log("After filling qty", qty);
+                // console.log("After filling qty", qty);
             }
 
         }
@@ -352,11 +352,11 @@ export class OrderBookManager {
             });
             bestPrices.set(price, remaingQty);
         }
-        console.log("orderbook: ", this.orderbooks.get(data.market));
+        // console.log("orderbook: ", this.orderbooks.get(data.market));
 
         this.getOrderbook(data.market)?.bids.forEach(bid => {
-            console.log("total qty; ", bid.availableQty);
-            console.log("orders: ", bid.orders.toArray());
+            // console.log("total qty; ", bid.availableQty);
+            // console.log("orders: ", bid.orders.toArray());
         })
 
     }

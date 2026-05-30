@@ -5,6 +5,7 @@ import { debugState } from "./utils/debug";
 import { GetPosition } from "./controllers/getPosition";
 import { getOpenOrders, getOrders } from "./controllers/getOrders";
 import { getFill } from "./controllers/getFills";
+import { markPrice } from "./controllers/markPrice";
 
 function handleEngineRequest(data: EngineRequest) {
     if (data.msg === "OnRamp") {
@@ -23,6 +24,8 @@ function handleEngineRequest(data: EngineRequest) {
         return getOpenOrders(data.data)
     }else if(data.msg === "GetFills") {
         return getFill(data.data);
+    }else if(data.msg === "MarkPrice") {
+        markPrice(data.data);
     }
 }
 
@@ -34,18 +37,22 @@ while (1) {
     if(!raw_data) continue;
     const received_data: EngineRequest = JSON.parse(raw_data);
     // console.log("received data", received_data);
+
     try {
         const response_data = handleEngineRequest(received_data)!;
-        console.log("data:", response_data);
+        if(!response_data) {
+            continue;
+        }
+        // console.log("data:", response_data);
         await RedisManager.getInstance().publishData({
             correlationId: received_data.correlationID,
             ok: true,
             data: response_data,
         });
-        debugState();
+        // debugState();
 
     } catch (error) {
-        console.log("caught some error for user request");
+        console.log("caught some error for user request", error);
         await RedisManager.getInstance().publishData({
             correlationId: received_data.correlationID,
             ok: false,

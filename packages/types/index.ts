@@ -77,3 +77,4 @@ export type UserOrder = {
     market: string,
     slippage?: string,
 }
+
