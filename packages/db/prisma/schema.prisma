@@ -8,7 +8,75 @@ datasource db {
 }
 
 model User {
-  id       String @id @default(uuid())
-  username String @unique
-  password String
+  id         String     @id @default(uuid())
+  username   String     @unique
+  password   String
+  longFills  Fills[]    @relation(name: "longUser")
+  shortFills Fills[]    @relation(name: "shortUser")
+  positions  Position[]
+  orders     Orders[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model Asset {
+  id        String   @id @default(uuid())
+  name      String
+  img       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Fills {
+  id           String   @id @default(uuid())
+  longUserId   String
+  shortUserId  String
+  makerId      String
+  takerId      String
+  longOrderId  String
+  shortOrderId String
+  price        String
+  quantity     String
+  market       String
+  longUser     User     @relation(name: "longUser", fields: [longUserId], references: [id])
+  shortUser    User     @relation(name: "shortUser", fields: [shortUserId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Position {
+  id               String   @id @default(uuid())
+  userId           String
+  Side             side
+  quantity         String
+  margin           String
+  liquidationPrice String
+  averagePrice     String
+  market           String
+  user             User     @relation(fields: [userId], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Orders {
+  id        String   @id @default(uuid())
+  quantity  String
+  price     String
+  side      side
+  type      type
+  userId    String
+  market    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum side {
+  long
+  short
+}
+
+enum type {
+  limit
+  market
 }
