@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../utils/auth";
 import { asyncHandler } from "../utils/async-handler";
-import { createOrder, deleteOrder, getFills, getOpenOrders, getOrders, getPostiion, initializeOrderbook, onrampUser } from "../controllers/exchange.controllers";
+import { createOrder, deleteOrder, getDepth, getFills, getOpenOrders, getOrders, getPostiion, initializeOrderbook, onrampUser } from "../controllers/exchange.controllers";
 
 export const exchangeRouter = Router();
 
@@ -13,3 +13,4 @@ exchangeRouter.get("/position/open/:marketId", requireAuth, asyncHandler(getPost
 exchangeRouter.get("/orders/:marketId", requireAuth, asyncHandler(getOrders));
 exchangeRouter.get("/orders/open/:marketId", requireAuth, asyncHandler(getOpenOrders));
 exchangeRouter.get("/fills", requireAuth, asyncHandler(getFills));
+exchangeRouter.get("/depth/:marketId", asyncHandler(getDepth));

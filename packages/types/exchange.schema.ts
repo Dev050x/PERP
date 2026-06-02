@@ -43,3 +43,7 @@ export const getPositionSchema = z.object({
 export const getOrdersSchema = z.object({
     marketId: string(),
 });
+
+export const getDepthSchema = z.object({
+    marketId: string(),
+});

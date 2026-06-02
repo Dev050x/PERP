@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { getUserId } from "../utils/auth";
 import { RedisManager } from "../store/redis-manager";
 import { waitForEngineResponse } from "../utils/pending-response";
-import { createOrderSchema, deleteOrderSchema, getOrdersSchema, getPositionSchema } from "types/exchange";
+import { createOrderSchema, deleteOrderSchema, getDepthSchema, getOrdersSchema, getPositionSchema } from "types/exchange";
 import { sendValidationError } from "../utils/validation";
 
 export const createOrder = async (req: Request, res: Response, next: NextFunction) => {
@@ -268,5 +268,38 @@ export const getFills = async (req: Request, res: Response) => {
 
     res.status(200).json({
         data: response.data,
+    });
+}
+
+export const getDepth = async (req: Request, res: Response) => {
+    const correlationID = crypto.randomUUID();
+    const parsedBody = getDepthSchema.safeParse(req.params);
+
+    if (!parsedBody.success) {
+        sendValidationError(res, parsedBody.error);
+        return;
+    }
+
+    await RedisManager.getInstance().publishMessage({
+        msg: "GetDepth",
+        data: {
+            userId: "get-depth",
+            market: parsedBody.data.marketId,
+        },
+        correlationID,
+    });
+
+    const response = await waitForEngineResponse(correlationID, 5000);
+
+    if (response.error) {
+        res.status(400).json({
+            success: false,
+            error: response.error ? response.error : "some user error",
+        });
+        return;
+    }
+
+    res.status(200).json({
+        ...response.data
     });
 }

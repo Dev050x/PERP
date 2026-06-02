@@ -6,6 +6,7 @@ import { GetPosition } from "./controllers/get-position";
 import { getOpenOrders, getOrders } from "./controllers/get-orders";
 import { getFill } from "./controllers/get-fills";
 import { markPrice } from "./controllers/mark-price";
+import { getDepth } from "./controllers/get-depth";
 
 function handleEngineRequest(data: EngineRequest) {
     if (data.msg === "OnRamp") {
@@ -26,6 +27,8 @@ function handleEngineRequest(data: EngineRequest) {
         return getFill(data.data);
     }else if(data.msg === "MarkPrice") {
         markPrice(data.data);
+    }else if(data.msg === "GetDepth") {
+        return getDepth(data.data);
     }
 }
 

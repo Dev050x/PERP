@@ -1,4 +1,4 @@
-export type EngineRequest = OnRampType | CreateOrderType | InitializeOrderbookType | CancelOrderType | GetPositionType | GetOpenOrders | GetOrders | GetFills | MarkPriceType;
+export type EngineRequest = OnRampType | CreateOrderType | InitializeOrderbookType | CancelOrderType | GetPositionType | GetOpenOrders | GetOrders | GetFills | MarkPriceType | GetDepth;
 
 export type OnRampType = {
     msg: "OnRamp",
@@ -108,4 +108,15 @@ export interface StreamData {
     P: string,
     r: string,
     T: number
+}
+
+export type GetDepth = {
+    msg: "GetDepth",
+    correlationID: string,
+    data: GetDepthData
+}
+
+export type GetDepthData = {
+    userId: string,
+    market: string
 }
