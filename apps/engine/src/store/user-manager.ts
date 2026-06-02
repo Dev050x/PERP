@@ -4,9 +4,9 @@ import { calculateAveragePrice, calculateLiquidationPrice, calculateUnrealPnl } 
 import { LiquidationManager } from "./liquidation-manager";
 
 export const supported_asset = ["SOL", "ETH", "USDC"];
-const HARD_CORDED_USER = "c43838a8-e271-4599-8b16-696296c02869";
-const HARD_CORDED_USER_1 = "ac896fbc-02fd-4324-ba13-45e9003d4c50";
-const HARD_CORDED_USER_2 = "91245d45-b1ed-4b74-a0d5-2a1a17326052";
+const HARD_CORDED_USER = "ce79888d-8889-4c4f-8f2d-3fd4a7bb2d8f";
+const HARD_CORDED_USER_1 = "50fc21c2-cf9b-4052-9f58-98be05c91e08";
+const HARD_CORDED_USER_2 = "6da9a93a-2aa7-496d-9be2-3c82bb0427b3";
 
 export class UserManager {
     private static instance: UserManager;
@@ -61,6 +61,15 @@ export class UserManager {
             throw new Error("User does not have any positions");
         }
         return userPositions;
+    }
+
+    public getUserPositionByMarket(userId: string, market: string) {
+        const userPositionsByMarket = this.users.get(userId)?.positions.get(market);
+        if(!userPositionsByMarket) {
+            return null;
+        }
+        return userPositionsByMarket;
+    
     }
 
     public createUser(userId: string) {

@@ -13,5 +13,5 @@ export function toBigInt(value: string, precision: number): bigint {
 }
 
 export function toString(input: bigint): string {
-    return (input / 1_000_000n).toString();
+    return (input / 1_00_000_000n).toString();
 }

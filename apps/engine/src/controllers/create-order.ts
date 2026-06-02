@@ -19,7 +19,7 @@ export function CreateOrder(data: CreateOrderData) {
     const userManager = UserManager.getInstance();
     const userOrder: UserOrder = data;
     const orderId = crypto.randomUUID();
-    if(data.type === "market")  {
+    if (data.type === "market") {
         data.price = toString(orderbookManager.getMarketPrice(data.userId, data.slippage!, data.side, data.market)!);
     }
 
@@ -31,18 +31,21 @@ export function CreateOrder(data: CreateOrderData) {
     const remainQty = orderbookManager.matchOrder(userOrder, orderId);
     const filledQty = toBigInt(userOrder.qty, PRECISION) - remainQty;
     const status: OrderStatus = resolveStatus(filledQty, toBigInt(data.qty, PRECISION));
-    const fills = (status === "open" ? [] : orderbookManager.getUserFillsByOrderId(orderId)!);
+    const fills = (status === "open" ? [] :  orderbookManager.getUserFillsByOrderId(orderId)!);
+    let position = userManager.getUserPositionByMarket(userOrder.userId, userOrder.market);
 
     if (status !== "Filled") {
         orderbookManager.updateOrderBook(userOrder, remainQty, orderId);
     }
 
     userManager.addUserOrder(data, orderId, status);
-    const order = SerializeData(userManager.getUserOrder(data.userId, orderId)!);
+    const order = userManager.getUserOrder(data.userId, orderId)!;
 
     return {
+        userId: userOrder.userId,
         fills: serializeFills(fills),
-        order,
+        order: SerializeData(order),
+        position: position ? SerializeData(position) : "",
     }
 }
 

@@ -21,10 +21,9 @@ export const signUp = async (req: Request, res: Response): Promise<void>  => {
         const user = await prisma.user.create({
             data: {
                 username: parsedBody.data.username,
-                password: password
-
+                password: password,
             }
-        });
+        })
 
 
         res.status(200).json({
@@ -36,6 +35,7 @@ export const signUp = async (req: Request, res: Response): Promise<void>  => {
         res.status(400).json({
             success: false,
             msg: "user already exists",
+            error: error instanceof Error ? error.message : "",
         })
     }
 
