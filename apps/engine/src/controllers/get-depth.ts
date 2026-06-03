@@ -7,8 +7,8 @@ interface Depth {
     asks: [string, string][];
 }
 
-export function getDepth(data: GetDepthData) {
-    const bestPrices = OrderBookManager.getInstance().getBestPriceOfAsset(data.market);
+export function getDepth(market: string) {
+    const bestPrices = OrderBookManager.getInstance().getBestPriceOfAsset(market);
     const depth: Depth = {
         bids: [],
         asks: []
@@ -20,11 +20,14 @@ export function getDepth(data: GetDepthData) {
             depth.bids.push([toString(price), toString(qty)]);
         }
     }
-    if(asks) {
-        for(const [price, qty] of asks.entries())  {
+    if (asks) {
+        for (const [price, qty] of asks.entries()) {
             depth.asks.push([toString(price), toString(qty)]);
         }
     }
 
-    return depth;
+    return {
+        depth: depth,
+        market: market,
+    };
 }

@@ -27,5 +27,9 @@ export type CreateOrderResponseData = {
     userId: string, 
     fills: Stringify<Fill>[],
     order: Stringify<Order>,
-    position: Stringify<Position>
+    position: Stringify<Position>,
+    depth : {
+        bids: [string, string][],
+        asks: [string, string][]
+    }
 }

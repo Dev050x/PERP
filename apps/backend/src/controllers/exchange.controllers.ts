@@ -4,6 +4,7 @@ import { RedisManager } from "../store/redis-manager";
 import { waitForEngineResponse } from "../utils/pending-response";
 import { createOrderSchema, deleteOrderSchema, getDepthSchema, getOrdersSchema, getPositionSchema } from "types/exchange";
 import { sendValidationError } from "../utils/validation";
+import { PositionScalarFieldEnum } from "../../../../packages/db/generated/prisma/internal/prismaNamespace";
 
 export const createOrder = async (req: Request, res: Response, next: NextFunction) => {
     const userId = getUserId(req);
@@ -45,7 +46,9 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
 
     res.status(200).json({
         msg: "Order Placed succefully",
-        data: response.data,
+        userId: response.data.userId,
+        order: response.data.order,
+        position: response.data.position
     });
 
 }
@@ -82,7 +85,7 @@ export const deleteOrder = async (req: Request, res: Response) => {
 
     res.status(200).json({
         msg: "Order Canelled",
-        data: response.data,
+        order: response.data.order
     });
 
 }

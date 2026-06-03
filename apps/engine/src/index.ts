@@ -1,12 +1,14 @@
 import type { EngineRequest } from "types/publisher";
 import { RedisManager } from "./store/redis-manager";
-import { CancelOrder, CreateOrder,InitializeOrderBook, OnRamp } from "./controllers/create-order";
+import { CreateOrder,InitializeOrderBook} from "./controllers/create-order";
+import { CancelOrder } from "./controllers/cancel-order";
 import { debugState } from "./utils/debug";
 import { GetPosition } from "./controllers/get-position";
 import { getOpenOrders, getOrders } from "./controllers/get-orders";
 import { getFill } from "./controllers/get-fills";
 import { markPrice } from "./controllers/mark-price";
 import { getDepth } from "./controllers/get-depth";
+import { OnRamp } from "./controllers/onramp";
 
 function handleEngineRequest(data: EngineRequest) {
     if (data.msg === "OnRamp") {
@@ -28,7 +30,7 @@ function handleEngineRequest(data: EngineRequest) {
     }else if(data.msg === "MarkPrice") {
         markPrice(data.data);
     }else if(data.msg === "GetDepth") {
-        return getDepth(data.data);
+        return getDepth(data.data.market);
     }
 }
 

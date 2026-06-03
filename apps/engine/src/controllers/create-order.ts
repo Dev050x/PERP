@@ -1,18 +1,12 @@
 import { SerializableUserBalances, SerializeData, serializeFills } from "../utils/serialize";
-import type { CancelOrderData, CancelOrderType, CreateOrderData, EngineRequest } from "types/publisher";
+import type { CancelOrderData, CreateOrderData, EngineRequest } from "types/publisher";
 import { PRECISION, toBigInt, toString } from "../utils/conversion";
 import { OrderBookManager } from "../store/orderbook-manager";
 import type { OrderStatus, UserOrder } from "types";
 import { UserManager } from "../store/user-manager";
 import { resolveStatus } from "../utils/utility";
+import { getDepth } from "./get-depth";
 
-export function OnRamp(data: EngineRequest) {
-    const userBalance = UserManager.getInstance().initializeUserBalance(data.data.userId);
-    const serializeUserBalance = SerializableUserBalances(userBalance);
-    return {
-        userBalance: serializeUserBalance,
-    }
-}
 
 export function CreateOrder(data: CreateOrderData) {
     const orderbookManager = OrderBookManager.getInstance();
@@ -40,22 +34,14 @@ export function CreateOrder(data: CreateOrderData) {
 
     userManager.addUserOrder(data, orderId, status);
     const order = userManager.getUserOrder(data.userId, orderId)!;
+    const depth = getDepth(data.market);
 
     return {
         userId: userOrder.userId,
         fills: serializeFills(fills),
         order: SerializeData(order),
         position: position ? SerializeData(position) : "",
-    }
-}
-
-export function CancelOrder(data: CancelOrderData) {
-    const orderbookManager = OrderBookManager.getInstance();
-    const userManager = UserManager.getInstance();
-    orderbookManager.cancelOrder(data.userId, data.orderId);
-    const order = SerializeData(userManager.getUserOrder(data.userId, data.orderId)!);
-    return {
-        order,
+        depth,
     }
 }
 
