@@ -58,6 +58,14 @@ export class OrderBookManager {
         return this.bestPrices;
     }
 
+    public getFillsByUserId() {
+        return this.fillsByUserId;
+    }
+
+    public getFillsByOrderId() {
+        return this.fillsByOrderId;
+    }
+
     public getUserFillsByUserId(userId: string) {
         if (!this.fillsByUserId.get(userId)) throw new Error("Fills does not exist for this users");
         return this.fillsByUserId.get(userId);

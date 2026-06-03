@@ -9,6 +9,9 @@ import { getFill } from "./controllers/get-fills";
 import { markPrice } from "./controllers/mark-price";
 import { getDepth } from "./controllers/get-depth";
 import { OnRamp } from "./controllers/onramp";
+import { snapshot } from "./utils/snanpshot";
+import fs from "fs";
+
 
 function handleEngineRequest(data: EngineRequest) {
     if (data.msg === "OnRamp") {
@@ -34,28 +37,29 @@ function handleEngineRequest(data: EngineRequest) {
     }
 }
 
-while (1) {
+void snapshot();
 
+
+while (1) {
     const redisManager = RedisManager.getInstance();
     const item = await redisManager.readDataFromSream();
     const raw_data= item?.[0]?.messages?.[0]?.message["message"];
     if(!raw_data) continue;
+    redisManager.setLastOffset(item[0]?.messages[0]?.id!);
     const received_data: EngineRequest = JSON.parse(raw_data);
-    // console.log("received data", received_data);
-
     try {
         const response_data = handleEngineRequest(received_data)!;
         if(!response_data) {
             continue;
         }
-        // console.log("data:", response_data);
+    
         await RedisManager.getInstance().publishData({
             msg: received_data.msg,
             correlationId: received_data.correlationID,
             ok: true,
             data: response_data,
         });
-        // debugState();
+        
 
     } catch (error) {
         console.log("caught some error for user request", error);
