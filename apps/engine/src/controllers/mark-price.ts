@@ -9,7 +9,7 @@ export function markPrice(data: MarkPriceData) {
     const markPriceOfAsset = data.prices.filter((s:StreamData) => valid_asset.includes(s.s.replace("USDC", "")));
     const orderbookManager = OrderBookManager.getInstance();
     for(const markPrice of markPriceOfAsset) {
-        orderbookManager.setIndexPrice(markPrice.s.replace("USDC", ""), toBigInt(markPrice.i, PRECISION));
+        orderbookManager.setMarkPrice(markPrice.s.replace("USDC", ""), toBigInt(markPrice.p, PRECISION));
         LiquidationManager.getInstance().liquidateUser(toBigInt(markPrice.p, PRECISION), markPrice.s.replace("USDC",""));
     }
 }

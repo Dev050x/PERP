@@ -24,7 +24,7 @@ export type orderbook = {
     bids: Map<bigint, RestingOrders>,
     asks: Map<bigint, RestingOrders>,
     lastTradedPrice: bigint,
-    indexPrice: bigint,
+    markPrice: bigint,
 };
 
 export type SortedPrices = {

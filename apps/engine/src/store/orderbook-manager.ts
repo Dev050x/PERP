@@ -105,7 +105,7 @@ export class OrderBookManager {
                     bids: new Map(),
                     asks: new Map(),
                     lastTradedPrice: 0n,
-                    indexPrice: 0n
+                    markPrice: 0n
                 });
 
                 this.bestPrices.set(asset, {
@@ -117,9 +117,9 @@ export class OrderBookManager {
         return [...this.orderbooks.keys()];
     }
 
-    public setIndexPrice(asset: string, indexPrice: bigint) {
+    public setMarkPrice(asset: string, markPrice: bigint) {
         const asset_orderbook = this.getOrderbook(asset)!;
-        asset_orderbook.indexPrice = indexPrice;
+        asset_orderbook.markPrice = markPrice;
     }
 
     public addAsset(asset: string) {
@@ -130,7 +130,7 @@ export class OrderBookManager {
             bids: new Map(),
             asks: new Map(),
             lastTradedPrice: 0n,
-            indexPrice: 0n
+            markPrice: 0n
         });
     }
 

@@ -11,6 +11,7 @@ import { getDepth } from "./controllers/get-depth";
 import { OnRamp } from "./controllers/onramp";
 import { snapshot } from "./utils/snanpshot";
 import fs from "fs";
+import { fundingRate } from "./controllers/funding-rate";
 
 
 function handleEngineRequest(data: EngineRequest) {
@@ -38,7 +39,7 @@ function handleEngineRequest(data: EngineRequest) {
 }
 
 void snapshot();
-
+void fundingRate();
 
 while (1) {
     const redisManager = RedisManager.getInstance();
@@ -52,7 +53,7 @@ while (1) {
         if(!response_data) {
             continue;
         }
-    
+        debugState();
         await RedisManager.getInstance().publishData({
             msg: received_data.msg,
             correlationId: received_data.correlationID,
