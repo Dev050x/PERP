@@ -117,6 +117,11 @@ export class OrderBookManager {
         return [...this.orderbooks.keys()];
     }
 
+    public setIndexPrice(asset: string, indexPrice: bigint) {
+        const asset_orderbook = this.getOrderbook(asset)!;
+        asset_orderbook.indexPrice = indexPrice;
+    }
+
     public addAsset(asset: string) {
         if (this.orderbooks.get(asset)) {
             throw new Error("orderbook already exists for this asset");
@@ -198,7 +203,7 @@ export class OrderBookManager {
                 (ask.availableQty === 0n ? asks.delete(p) : null);
                 (bestPrices.get(p) === 0n ? bestPrices.delete(p) : null);
                 (order.qty === 0n ? orders.removeFirst() : null);
-                // console.log("After filling qty", qty);
+                orderbook.lastTradedPrice = order.price;
 
             }
         }
@@ -260,7 +265,7 @@ export class OrderBookManager {
                 (bid.availableQty === 0n ? bids.delete(p) : null);
                 (bestPrices.get(p) === 0n ? bestPrices.delete(p) : null);
                 (order.qty === 0n ? orders.removeFirst() : null);
-                // console.log("After filling qty", qty);
+                orderbook.lastTradedPrice = order.price;
             }
 
         }
