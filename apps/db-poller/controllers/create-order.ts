@@ -1,9 +1,10 @@
 import { prisma } from "db";
 import type { CreateOrderResponseData } from "types/receiver";
 import type { side, type } from "../../../packages/db/generated/prisma/enums";
+import { updateCandles } from "./create-candle";
 
 export async function createOrder(data: CreateOrderResponseData) {
-    console.log("pushing create order resposse to DB: ", data);
+    console.log("pushing create order resposse to DB");
     const fills = data.fills.length !== 0 ? data.fills.map(fill => {
         return {
             longUserId: fill.LongUserId,
@@ -53,5 +54,8 @@ export async function createOrder(data: CreateOrderResponseData) {
             });
         }
 
-    })
+    });
+
+    updateCandles(data.order.market, Number(data.order.price));
+    
 }

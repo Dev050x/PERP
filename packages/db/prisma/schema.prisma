@@ -71,6 +71,17 @@ model Orders {
   updatedAt DateTime @updatedAt
 }
 
+model Candle {
+  id        String   @id @default(uuid())
+  market    String
+  open      String
+  high      String
+  low       String
+  close     String
+  timestamp String
+  createdAt DateTime @default(now())
+}
+
 enum side {
   long
   short

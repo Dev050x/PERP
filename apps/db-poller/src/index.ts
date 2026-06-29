@@ -1,7 +1,10 @@
 import type { EngineResponse } from "types/receiver";
 import { RedisManager } from "./redis-manager";
-import { prisma } from "db";
 import { createOrder } from "../controllers/create-order";
+import { createCandle } from "../controllers/create-candle";
+
+
+void createCandle();
 
 function handleEngineResponse(data: EngineResponse) {
     if (data.msg === "CreateOrder") {
