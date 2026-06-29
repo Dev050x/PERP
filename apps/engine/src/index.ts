@@ -53,7 +53,6 @@ while (1) {
         if(!response_data) {
             continue;
         }
-        debugState();
         await RedisManager.getInstance().publishData({
             msg: received_data.msg,
             correlationId: received_data.correlationID,

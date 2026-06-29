@@ -40,7 +40,7 @@ export function CreateOrder(data: CreateOrderData) {
         userId: userOrder.userId,
         fills: serializeFills(fills),
         order: SerializeData(order),
-        position: position ? SerializeData(position) : "",
+        position: position ? SerializeData(position) : {},
         depth,
     }
 }
