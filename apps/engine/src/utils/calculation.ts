@@ -18,7 +18,7 @@ export function calculateLiquidationPrice(price: bigint, qty: bigint, margin: bi
 }
 
 export function calculateAveragePrice(prevPrice: bigint, prevQty: bigint, price: bigint, qty: bigint) {
-    return ((prevPrice * prevQty) * (qty * price)) / (prevQty + qty);
+    return ((prevPrice * prevQty) + (qty * price)) / (prevQty + qty);
 }
 
 export function calculateUnrealPnl(pos: Position, price: bigint) {
