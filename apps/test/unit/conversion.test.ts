@@ -32,6 +32,7 @@ describe("toString", () => {
 
         const result = toString(12345600000n);
         const expected = "123.45600000";
+        console.log("expected: ", expected);
         expect(result).toBe(expected);
     });
 
