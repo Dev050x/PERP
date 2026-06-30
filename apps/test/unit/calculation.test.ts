@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { calculateMargin, getStatus, calculateLiquidationPrice, calculateAveragePrice, calculateUnrealPnl } from "../../engine/src/utils/calculation";
+import { calculateMargin,calculateLiquidationPrice, calculateAveragePrice, calculateUnrealPnl } from "../../engine/src/utils/calculation";
 import { resolveStatus } from "../../engine/src/utils/utility";
 import type { Position } from "types";
 
@@ -20,12 +20,12 @@ describe("calculateMargin", () => {
 describe("getStatus — CORRECT behavior", () => {
     test("returns 'open' when no quantity filled (qty unchanged)", () => {
 
-        expect(getStatus(100n, 100n)).toBe("open");
+        expect(resolveStatus(0n, 100n)).toBe("open");
     });
 
     test("returns 'partiallyFilled' when some quantity was matched", () => {
 
-        expect(getStatus(100n, 60n)).toBe("partiallyFilled");
+        expect(resolveStatus(100n, 60n)).toBe("partiallyFilled");
     });
 });
 

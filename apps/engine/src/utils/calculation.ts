@@ -7,12 +7,6 @@ export function calculateMargin(initialQty: bigint, remainQty: bigint, margin: b
     return (remainQty * margin) / initialQty;
 }
 
-export function getStatus(initialQty: bigint, remainQty: bigint): "open" | "partiallyFilled" {
-    if (initialQty === remainQty) {
-        return "partiallyFilled";
-    }
-    return "open";
-}
 
 export function calculateLiquidationPrice(price: bigint, qty: bigint, margin: bigint, side: "LONG" | "SHORT") {
     console.log(`price ${price} qty: ${qty} margin: ${margin} side: ${side}`);
