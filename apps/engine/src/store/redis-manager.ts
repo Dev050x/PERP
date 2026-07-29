@@ -30,13 +30,15 @@ export class RedisManager {
         this.lastOffset = offset;
     }
 
-    public readDataFromSream() {
-        const item =  this.receiver.xRead(
-            { key: 'backend-to-engine', id: '$' },
-            { BLOCK: 5000, COUNT: 1 }
-        );
+    public readDataFromStream(lastId: string) {
+        const item = this.receiver.xRead({ key: "backend-to-engine", id: lastId }, { BLOCK: 5000, COUNT: 1 });
         return item;
-    };;
+    }
+
+    public async readMissedMessages(afterId: string) {
+        const items = await this.receiver.xRange("backend-to-engine", `(${afterId}`, "+");
+        return items;
+    }
 
     public publishData(data: EngineResponse) {
         this.publisher.xAdd("engine-to-backend", "*", {
@@ -44,4 +46,9 @@ export class RedisManager {
         });
     }
 
+    public async getLastPublishedCorrelationId(): Promise<string | undefined> {
+        const last = await this.receiver.xRevRange("engine-to-backend", "+", "-", { COUNT: 1 });
+        if (!last || last.length === 0) return undefined;
+        return last[0]!.message["correlationId"];
+    }
 }

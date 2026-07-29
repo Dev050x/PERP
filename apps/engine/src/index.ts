@@ -14,9 +14,10 @@ import { fundingRate } from "./controllers/funding-rate";
 import { UserManager } from "./store/user-manager";
 import { LiquidationManager } from "./store/liquidation-manager";
 import { OrderBookManager } from "./store/orderbook-manager";
+import { replayMissedMessages } from "./utils/replay-message";
 
 
-function handleEngineRequest(data: EngineRequest) {
+export function handleEngineRequest(data: EngineRequest) {
     if (data.msg === "OnRamp") {
         return OnRamp(data);
     }else if(data.msg === "CreateOrder"){
@@ -46,6 +47,8 @@ LiquidationManager.getInstance();
 OrderBookManager.getInstance();
 console.log("engine state initialized");
 
+console.log(`replaying missed messages.........`);
+await replayMissedMessages();
 
 console.log("starting the snapshot service...");
 void snapshot();
@@ -55,13 +58,21 @@ console.log("starting the fundingRate service...")
 void fundingRate();
 console.log("fundingRate service started...")
 
+let lastId = RedisManager.getInstance().getLastOffset() || "$";
+
 while (1) {
     const redisManager = RedisManager.getInstance();
-    const item = await redisManager.readDataFromSream();
+
+    const item = await redisManager.readDataFromStream(lastId);
     const raw_data= item?.[0]?.messages?.[0]?.message["message"];
     if(!raw_data) continue;
-    redisManager.setLastOffset(item[0]?.messages[0]?.id!);
+    
+    let entryId = item[0]?.messages[0]?.id!
+    redisManager.setLastOffset(entryId);
+    lastId = entryId;
+
     const received_data: EngineRequest = JSON.parse(raw_data);
+
     try {
         const response_data = handleEngineRequest(received_data)!;
         if(!response_data) {
