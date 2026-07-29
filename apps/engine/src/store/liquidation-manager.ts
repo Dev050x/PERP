@@ -1,5 +1,6 @@
     import BTree from "sorted-btree";
     import { supported_asset, UserManager } from "./user-manager";
+import { getLatestSnapshotCached } from "../utils/snanpshot";
 
     export class LiquidationManager {
         private static instance: LiquidationManager;
@@ -29,9 +30,10 @@
         }
 
         public initializeLiquidation() {
+            const latest = getLatestSnapshotCached();
             for (const asset of supported_asset) {
-                this.liquidationLongs.set(asset, new BTree());
-                this.liquidationShorts.set(asset, new BTree());
+                this.liquidationLongs.set(asset, latest?.liquidationLongs.get(asset) ?? new BTree());
+                this.liquidationShorts.set(asset, latest?.liquidationShorts.get(asset) ?? new BTree());
             }
         }
 
@@ -64,9 +66,9 @@
         }
 
         public liquidateUser(price: bigint, market: string) {
-            console.log(`trying to liquidating user for this asset ${market} at this price: ${price} `);
+            // console.log(`trying to liquidating user for this asset ${market} at this price: ${price} `);
             if (this.liquidationLongs.get(market)?.length !== 0) {
-                console.log(`trying.................to liquidate long`);
+                // console.log(`trying.................to liquidate long`);
                 for (const [liqPrice, userIdS] of [...this.liquidationLongs.get(market)?.entries()!]) {
                     if (price > liqPrice) {
                         break;
@@ -86,7 +88,7 @@
                 }
             }
             if (this.liquidationShorts.get(market)?.length !== 0) {
-                console.log(`trying.................to liquidate short`);
+                // console.log(`trying.................to liquidate short`);
                 for (const [liqPrice, userIdS] of [...this.liquidationShorts.get(market)?.entriesReversed()!]) {
                     if (price < liqPrice) {
                         break;

@@ -4,8 +4,8 @@ import BTree from "sorted-btree";
 import { PRECISION, toBigInt } from "../utils/conversion";
 import { calculateMargin } from "../utils/calculation";
 import LinkedList from "dbly-linked-list";
+import { getLatestSnapshotCached } from "../utils/snanpshot";
 
-const temp = "divpatel";
 export class OrderBookManager {
     private static instance: OrderBookManager;
     private orderbooks: Map<string, orderbook>;
@@ -22,6 +22,7 @@ export class OrderBookManager {
         this.fillsByOrderId = new Map();
         this.fillsByUserId = new Map();
         this.initializeOrderBooks();
+        this.restoreFills();
     }
 
     public static getInstance() {
@@ -99,22 +100,36 @@ export class OrderBookManager {
     }
 
     public initializeOrderBooks() {
+        const latest = getLatestSnapshotCached();
+
         for (const asset of supported_asset) {
             if (!this.orderbooks.get(asset)) {
-                this.orderbooks.set(asset, {
+                const savedOrderbook = latest?.orderbook.get(asset);
+
+                this.orderbooks.set(asset, savedOrderbook ?? {
                     bids: new Map(),
                     asks: new Map(),
                     lastTradedPrice: 0n,
                     markPrice: 0n
                 });
 
-                this.bestPrices.set(asset, {
+                const savedBestPrices = latest?.bestPrices.get(asset);
+                this.bestPrices.set(asset, savedBestPrices ?? {
                     bids: new BTree(),
                     asks: new BTree()
                 });
             }
-        };
+        }
         return [...this.orderbooks.keys()];
+    }
+
+    public restoreFills() {
+        const latest = getLatestSnapshotCached();
+        if (!latest) return;
+
+        this.Fills = latest.fills;
+        this.fillsByUserId = latest.fillsByUserId;
+        this.fillsByOrderId = latest.fillsByOrderId;
     }
 
     public setMarkPrice(asset: string, markPrice: bigint) {

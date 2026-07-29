@@ -89,6 +89,7 @@ describe("Position Management — Integration", () => {
         expect(pos.qty).toBe(scaled("5"));
 
         um.createUserPosition(uid, scaled("120"), "SOL", scaled("5"), "LONG", scaled("250"));
+        //@ts-ignore
         pos = um.getUserPositionByMarket(uid, "SOL");
         expect(pos).toBeNull();
     });

@@ -10,8 +10,10 @@ import { markPrice } from "./controllers/mark-price";
 import { getDepth } from "./controllers/get-depth";
 import { OnRamp } from "./controllers/onramp";
 import { snapshot } from "./utils/snanpshot";
-import fs from "fs";
 import { fundingRate } from "./controllers/funding-rate";
+import { UserManager } from "./store/user-manager";
+import { LiquidationManager } from "./store/liquidation-manager";
+import { OrderBookManager } from "./store/orderbook-manager";
 
 
 function handleEngineRequest(data: EngineRequest) {
@@ -38,8 +40,20 @@ function handleEngineRequest(data: EngineRequest) {
     }
 }
 
+console.log("initializing engine state...");
+UserManager.getInstance();
+LiquidationManager.getInstance();
+OrderBookManager.getInstance();
+console.log("engine state initialized");
+
+
+console.log("starting the snapshot service...");
 void snapshot();
+console.log("snapshot service started...");
+
+console.log("starting the fundingRate service...")
 void fundingRate();
+console.log("fundingRate service started...")
 
 while (1) {
     const redisManager = RedisManager.getInstance();
@@ -59,7 +73,7 @@ while (1) {
             ok: true,
             data: response_data,
         });
-        
+        debugState();
 
     } catch (error) {
         console.log("caught some error for user request", error);
