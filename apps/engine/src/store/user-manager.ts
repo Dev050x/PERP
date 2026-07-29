@@ -2,6 +2,7 @@ import type { Order, OrderStatus, Position, UserBalance, UserDetails, UserOrder 
 import { PRECISION, toBigInt } from "../utils/conversion";
 import { calculateAveragePrice, calculateLiquidationPrice, calculateUnrealPnl } from "../utils/calculation";
 import { LiquidationManager } from "./liquidation-manager";
+import { getLatestSnapshotCached } from "../utils/snanpshot";
 
 export const supported_asset = ["SOL", "ETH", "USDC"];
 const HARD_CORDED_USER = "ce79888d-8889-4c4f-8f2d-3fd4a7bb2d8f";
@@ -16,9 +17,20 @@ export class UserManager {
     private constructor() {
         this.Balances = new Map();
         this.users = new Map();
-        this.initializeUserBalance(HARD_CORDED_USER);
-        this.initializeUserBalance(HARD_CORDED_USER_1);
-        this.initializeUserBalance(HARD_CORDED_USER_2);
+        this.initializeUsers();
+    }
+
+    public initializeUsers() {
+        const latest = getLatestSnapshotCached();
+
+        if (latest) {
+            this.users = latest.users;
+            this.Balances = latest.balances;
+        } else {
+            this.initializeUserBalance(HARD_CORDED_USER);
+            this.initializeUserBalance(HARD_CORDED_USER_1);
+            this.initializeUserBalance(HARD_CORDED_USER_2);
+        }
     }
 
     public static getInstance() {
@@ -45,7 +57,7 @@ export class UserManager {
     }
 
     public getUserOrders(userId: string) {
-        if(!this.users.get(userId)?.orders){
+        if (!this.users.get(userId)?.orders) {
             throw new Error("user doesn't have any open orders");
         }
         return this.users.get(userId)?.orders;
@@ -57,7 +69,7 @@ export class UserManager {
 
     public getUserPositions(userId: string) {
         const userPositions = this.users.get(userId)?.positions;
-        if(!userPositions){
+        if (!userPositions) {
             throw new Error("User does not have any positions");
         }
         return userPositions;
@@ -65,11 +77,10 @@ export class UserManager {
 
     public getUserPositionByMarket(userId: string, market: string) {
         const userPositionsByMarket = this.users.get(userId)?.positions.get(market);
-        if(!userPositionsByMarket) {
+        if (!userPositionsByMarket) {
             return null;
         }
         return userPositionsByMarket;
-    
     }
 
     public createUser(userId: string) {
@@ -79,7 +90,7 @@ export class UserManager {
         });
         const userBal = this.Balances.set(userId, {});
         return user;
-    };
+    }
 
     public getUsers() {
         return this.users;
@@ -89,18 +100,29 @@ export class UserManager {
         return this.Balances;
     }
 
-
     public closeUserPosition(position: Position, price: bigint) {
         const unPnl = calculateUnrealPnl(position, price);
         const relFund = position.margin + unPnl;
         const userBal = this.getUserBalances(position.userId)![position.market]!;
         userBal.availableBalance += relFund < 0n ? 0n : relFund;
-        userBal.lockedBalance -= (position.margin);
+        userBal.lockedBalance -= position.margin;
         this.getUser(position.userId)?.positions.delete(position.market);
-        LiquidationManager.getInstance().deleteLiquidation(position.averagePrice, position.userId, position.side, position.market);
+        LiquidationManager.getInstance().deleteLiquidation(
+            position.averagePrice,
+            position.userId,
+            position.side,
+            position.market,
+        );
     }
 
-    public createUserPosition(userId: string, averagePrice: bigint, market: string, qty: bigint, side: "LONG" | "SHORT", margin: bigint) {
+    public createUserPosition(
+        userId: string,
+        averagePrice: bigint,
+        market: string,
+        qty: bigint,
+        side: "LONG" | "SHORT",
+        margin: bigint,
+    ) {
         const user = this.getUser(userId)!;
         const userBal = this.getUserBalances(userId)![market]!;
         const exisPos = user.positions.get(market);
@@ -108,8 +130,19 @@ export class UserManager {
             //same side
             if (exisPos.side === side) {
                 const newAvgPrice = calculateAveragePrice(exisPos.averagePrice, exisPos.qty, averagePrice, qty);
-                const newLiquidPrice = calculateLiquidationPrice(newAvgPrice, exisPos.qty + qty, exisPos.margin + margin, side);
-                LiquidationManager.getInstance().updateLiquidation(newLiquidPrice, exisPos.liquidationPrice, userId, side, market);
+                const newLiquidPrice = calculateLiquidationPrice(
+                    newAvgPrice,
+                    exisPos.qty + qty,
+                    exisPos.margin + margin,
+                    side,
+                );
+                LiquidationManager.getInstance().updateLiquidation(
+                    newLiquidPrice,
+                    exisPos.liquidationPrice,
+                    userId,
+                    side,
+                    market,
+                );
                 exisPos.qty += qty;
                 exisPos.margin += margin;
                 exisPos.averagePrice = newAvgPrice;
@@ -123,27 +156,43 @@ export class UserManager {
                     this.createUserPosition(userId, averagePrice, market, newQty, side, margin);
                 } else {
                     const releasedMargin = (exisPos.margin * qty) / exisPos.qty;
-                    const realizedPnl = exisPos.side === 'LONG'
-                        ? (averagePrice - exisPos.averagePrice) * qty
-                        : (exisPos.averagePrice - averagePrice) * qty;
+                    const realizedPnl =
+                        exisPos.side === "LONG"
+                            ? (averagePrice - exisPos.averagePrice) * qty
+                            : (exisPos.averagePrice - averagePrice) * qty;
                     const relFund = releasedMargin + realizedPnl;
-                    userBal.availableBalance += (relFund < 0 ? 0n: relFund);
+                    userBal.availableBalance += relFund < 0 ? 0n : relFund;
                     userBal.lockedBalance -= releasedMargin;
                     exisPos.qty -= qty;
                     exisPos.margin -= releasedMargin;
                     const prevLiquidPrice = exisPos.liquidationPrice;
-                    if(exisPos.qty === 0n ){
+                    if (exisPos.qty === 0n) {
                         UserManager.getInstance().users.get(userId)?.positions.delete(market);
-                        LiquidationManager.getInstance().deleteLiquidation(prevLiquidPrice, userId, exisPos.side, market);
+                        LiquidationManager.getInstance().deleteLiquidation(
+                            prevLiquidPrice,
+                            userId,
+                            exisPos.side,
+                            market,
+                        );
                         console.log("adjusted positions : ", user.positions.get(market));
                         return;
                     }
-                    const newLiquidPrice = calculateLiquidationPrice(exisPos.averagePrice, exisPos.qty, exisPos.margin, exisPos.side);
-                    LiquidationManager.getInstance().updateLiquidation(newLiquidPrice, prevLiquidPrice, exisPos.userId, exisPos.side, market);
+                    const newLiquidPrice = calculateLiquidationPrice(
+                        exisPos.averagePrice,
+                        exisPos.qty,
+                        exisPos.margin,
+                        exisPos.side,
+                    );
+                    LiquidationManager.getInstance().updateLiquidation(
+                        newLiquidPrice,
+                        prevLiquidPrice,
+                        exisPos.userId,
+                        exisPos.side,
+                        market,
+                    );
                 }
             }
             console.log("adjusted positions : ", user.positions.get(market));
-
         } else {
             console.log(`price: ${averagePrice} market: ${market} qty: ${qty} margin: ${margin} `);
             const liquidationPrice = calculateLiquidationPrice(averagePrice, qty, margin, side);
@@ -155,7 +204,7 @@ export class UserManager {
                 averagePrice,
                 pnl: 0n,
                 userId,
-                market
+                market,
             });
             LiquidationManager.getInstance().createLiquidation(liquidationPrice, userId, side, market);
             console.log("user position: ", user.positions.get(market));
@@ -180,7 +229,7 @@ export class UserManager {
         }
         this.users.set(userId, {
             orders: new Map(),
-            positions: new Map()
+            positions: new Map(),
         });
         return this.Balances.get(userId)!;
     }
@@ -192,10 +241,10 @@ export class UserManager {
                 userBal[asset] = {
                     availableBalance: 0n,
                     lockedBalance: 0n,
-                }
+                };
             }
         }
-    };
+    }
 
     public hasEnoughBalance(userId: string, margin: bigint, asset: string): boolean {
         const userBal = this.getUserBalances(userId)!;
