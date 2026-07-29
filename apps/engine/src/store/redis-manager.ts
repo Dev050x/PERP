@@ -30,18 +30,19 @@ export class RedisManager {
         this.lastOffset = offset;
     }
 
-    public readDataFromSream() {
-        const item =  this.receiver.xRead(
-            { key: 'backend-to-engine', id: '$' },
-            { BLOCK: 5000, COUNT: 1 }
-        );
+    public readDataFromStream(lastId: string) {
+        const item = this.receiver.xRead({ key: "backend-to-engine", id: lastId }, { BLOCK: 5000, COUNT: 1 });
         return item;
-    };;
+    }
+
+    public async readMissedMessages(afterId: string) {
+        const items = await this.receiver.xRange("backend-to-engine", `(${afterId}`, "+");
+        return items;
+    }
 
     public publishData(data: EngineResponse) {
         this.publisher.xAdd("engine-to-backend", "*", {
             message: JSON.stringify(data),
         });
     }
-
 }
