@@ -58,7 +58,7 @@ console.log("starting the fundingRate service...")
 void fundingRate();
 console.log("fundingRate service started...")
 
-let lastId = RedisManager.getInstance().getLastOffset();
+let lastId = RedisManager.getInstance().getLastOffset() || "$";
 
 while (1) {
     const redisManager = RedisManager.getInstance();

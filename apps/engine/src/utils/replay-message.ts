@@ -21,6 +21,10 @@ export async function replayMissedMessages() {
 
     console.log(`replaying ${missed.length} missed messages`);
 
+    const lastPublishedCorrelationId = await redisManager.getLastPublishedCorrelationId();
+
+    let reachedLastPublished = lastPublishedCorrelationId === undefined;
+
     for (const entry of missed) {
         const raw_data = entry.message["message"];
         if (!raw_data) continue;
@@ -29,6 +33,14 @@ export async function replayMissedMessages() {
         try {
             const response_data = handleEngineRequest(received_data)!;
             redisManager.setLastOffset(entry.id);
+
+            if (!reachedLastPublished) {
+                if (received_data.correlationID === lastPublishedCorrelationId) {
+                    reachedLastPublished = true;
+                }
+                continue;
+            }
+
             if (!response_data) continue;
 
             await redisManager.publishData({
@@ -37,7 +49,6 @@ export async function replayMissedMessages() {
                 ok: true,
                 data: response_data,
             });
-
         } catch (error) {
             console.log("error replaying message", entry.id, error);
             redisManager.setLastOffset(entry.id);

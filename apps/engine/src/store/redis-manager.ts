@@ -45,4 +45,10 @@ export class RedisManager {
             message: JSON.stringify(data),
         });
     }
+
+    public async getLastPublishedCorrelationId(): Promise<string | undefined> {
+        const last = await this.receiver.xRevRange("engine-to-backend", "+", "-", { COUNT: 1 });
+        if (!last || last.length === 0) return undefined;
+        return last[0]!.message["correlationId"];
+    }
 }
