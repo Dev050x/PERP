@@ -5,7 +5,8 @@ interface CandleData {
     close: number;
     highest: number;
     lowest: number;
-    timestamp: number;
+    volume: number;
+    timestamp: Date;
 }
 
 const supported_asset = ["SOL", "ETH"];
@@ -17,58 +18,71 @@ function initializeEmptyCandles() {
             open: 0,
             close: 0,
             highest: 0,
-            lowest: 9999999,
-            timestamp: Date.now(),
+            lowest: Number.MAX_SAFE_INTEGER,
+            volume: 0,
+            timestamp: new Date(),
         });
     }
-};
+}
 
 async function resetCandles() {
     const completedCandles = Array.from(candles.entries());
+
     candles.clear();
+    initializeEmptyCandles();
+
     for (const [asset, candleData] of completedCandles) {
-        console.log(`creating candle for this ${asset}`);
-        if (candleData.lowest === 9999999) {
+        console.log(`Creating candle for ${asset}`);
+
+        if (candleData.lowest === Number.MAX_SAFE_INTEGER) {
             candleData.lowest = 0;
         }
+
         await prisma.candle.create({
             data: {
+                market: asset,
+                timestamp: candleData.timestamp,
                 open: candleData.open.toString(),
-                close: candleData.close.toString(),
                 high: candleData.highest.toString(),
                 low: candleData.lowest.toString(),
-                timestamp: candleData.timestamp.toString(),
-                market: asset,
+                close: candleData.close.toString(),
+                volume: candleData.volume.toString(),
             },
         });
     }
 }
 
-export function updateCandles(asset: string, price: number) {
-    const candle_data = candles.get(asset);
-    if (!candle_data) return;
+export function updateCandles(
+    asset: string,
+    price: number,
+    quantity: number
+) {
+    const candle = candles.get(asset);
+    if (!candle) return;
 
-    if (candle_data.open === 0) {
-        candle_data.open = price;
-        candle_data.highest = price;
-        candle_data.lowest = price;
-        console.log(`opening price changed for this ${asset} price: ${candle_data.open}`);
-    }
-    candle_data.close = price;
-    if (price > candle_data.highest) {
-        candle_data.highest = price;
-        console.log(`highest price changed for this ${asset} price: ${candle_data.highest}`);
+    if (candle.open === 0) {
+        candle.open = price;
+        candle.highest = price;
+        candle.lowest = price;
     }
 
-    if (price < candle_data.lowest) {
-        candle_data.lowest = price;
-        console.log(`lowest price changed for this ${asset} price: ${candle_data.lowest}`);
+    candle.close = price;
+
+    if (price > candle.highest) {
+        candle.highest = price;
     }
+
+    if (price < candle.lowest) {
+        candle.lowest = price;
+    }
+
+    candle.volume += quantity;
 }
 
-export async function createCandle() {
+export function createCandle() {
     initializeEmptyCandles();
+
     setInterval(async () => {
         await resetCandles();
-    }, 1000 * 60);
+    }, 60 * 1000);
 }
