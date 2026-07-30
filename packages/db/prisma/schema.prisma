@@ -72,14 +72,16 @@ model Orders {
 }
 
 model Candle {
-  id        String   @id @default(uuid())
   market    String
+  timestamp DateTime
+
   open      String
   high      String
   low       String
   close     String
-  timestamp String
-  createdAt DateTime @default(now())
+  volume    String
+
+  @@id([market, timestamp])
 }
 
 enum side {
