@@ -270,7 +270,7 @@ export class UserManager {
         user_asset_balance.lockedBalance -= amount;
     }
 
-    public addUserOrder(data: UserOrder, orderId: string, status: OrderStatus) {
+    public addUserOrder(data: UserOrder, orderId: string, status: OrderStatus, filledQty: bigint = 0n) {
         const user = this.getUser(data.userId)!;
         const order: Order = {
             orderId,
@@ -278,6 +278,7 @@ export class UserManager {
             market: data.market,
             side: data.side,
             qty: toBigInt(data.qty, PRECISION),
+            filledQty,
             margin: toBigInt(data.margin, PRECISION),
             type: data.type,
             price: toBigInt(data.price!, PRECISION),

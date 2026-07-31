@@ -32,7 +32,7 @@ export function CreateOrder(data: CreateOrderData) {
         orderbookManager.updateOrderBook(userOrder, remainQty, orderId);
     }
 
-    userManager.addUserOrder(data, orderId, status);
+    userManager.addUserOrder(data, orderId, status, filledQty);
     const order = userManager.getUserOrder(data.userId, orderId)!;
     const depth = getDepth(data.market);
 

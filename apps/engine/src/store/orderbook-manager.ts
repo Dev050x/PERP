@@ -227,20 +227,22 @@ export class OrderBookManager {
         ask.availableQty -= filledQty;
         bestPrices.set(p, bestPrices.get(p)! - filledQty);
         order.qty -= filledQty;
+        order.filledQty = (order.filledQty || 0n) + filledQty;
         qty -= filledQty;
         averagePrice =
           (averagePrice * prevQty + filledQty * p) / (prevQty + filledQty);
         prevQty = filledQty;
 
-        //status(order)
-        order.qty === 0n
-          ? order.status === "Filled"
-          : (order.status = "partiallyFilled");
+        // update status and filledQty of maker's order
+        order.status = order.qty === 0n ? "Filled" : "partiallyFilled";
         const user_order = UserManager.getInstance().getUserOrder(
           order.userId,
           order.orderId,
-        )!;
-        user_order.status = order.status;
+        );
+        if (user_order) {
+          user_order.status = order.status;
+          user_order.filledQty = order.filledQty;
+        }
 
         UserManager.getInstance().createUserPosition(
           order.userId,
@@ -308,20 +310,22 @@ export class OrderBookManager {
         bid.availableQty -= filledQty;
         bestPrices.set(p, bestPrices.get(p)! - filledQty);
         order.qty -= filledQty;
+        order.filledQty = (order.filledQty || 0n) + filledQty;
         qty -= filledQty;
         averagePrice =
           (averagePrice * prevQty + filledQty * p) / (prevQty + filledQty);
         prevQty = filledQty;
 
-        //status(order)
-        order.qty === 0n
-          ? order.status === "Filled"
-          : (order.status = "partiallyFilled");
+        // update status and filledQty of maker's order
+        order.status = order.qty === 0n ? "Filled" : "partiallyFilled";
         const user_order = UserManager.getInstance().getUserOrder(
           order.userId,
           order.orderId,
-        )!;
-        user_order.status = order.status;
+        );
+        if (user_order) {
+          user_order.status = order.status;
+          user_order.filledQty = order.filledQty;
+        }
         console.log(
           `we're creating the position for user ${order.userId} at average price ${p} and qty ${filledQty} with margin ${order.margin}`,
         );
@@ -434,12 +438,13 @@ export class OrderBookManager {
     const price = toBigInt(data.price!, PRECISION);
     const initialQty = toBigInt(data.qty, PRECISION);
     const bid = bids.get(price);
-    const newOrder = {
+    const newOrder: Order = {
       orderId,
       userId: data.userId,
       market: data.market,
       side: "LONG",
       qty: remaingQty,
+      filledQty: initialQty - remaingQty,
       margin: calculateMargin(
         initialQty,
         remaingQty,
@@ -463,12 +468,6 @@ export class OrderBookManager {
       });
       bestPrices.set(price, remaingQty);
     }
-    // console.log("orderbook: ", this.orderbooks.get(data.market));
-
-    this.getOrderbook(data.market)?.bids.forEach((bid) => {
-      // console.log("total qty; ", bid.availableQty);
-      // console.log("orders: ", bid.orders.toArray());
-    });
   }
 
   public updateAsks(data: UserOrder, remaingQty: bigint, orderId: string) {
@@ -477,12 +476,13 @@ export class OrderBookManager {
     const price = toBigInt(data.price!, PRECISION);
     const initialQty = toBigInt(data.qty, PRECISION);
     const ask = asks.get(price);
-    const newOrder = {
+    const newOrder: Order = {
       orderId,
       userId: data.userId,
       market: data.market,
       side: "SHORT",
       qty: remaingQty,
+      filledQty: initialQty - remaingQty,
       margin: calculateMargin(
         initialQty,
         remaingQty,

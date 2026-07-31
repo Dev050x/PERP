@@ -24,6 +24,7 @@ export async function createOrder(data: CreateOrderResponseData) {
   const order = {
     id: data.order.orderId,
     quantity: data.order.qty,
+    filledQuantity: data.order.filledQty || "0",
     price: data.order.price,
     side: data.order.side.toLocaleLowerCase() as side,
     type: data.order.type as type,
@@ -33,14 +34,47 @@ export async function createOrder(data: CreateOrderResponseData) {
   };
 
   await prisma.$transaction(async (tx) => {
-    await prisma.orders.create({
+    await tx.orders.create({
       data: order,
     });
 
     if (fills?.length) {
-      await prisma.fills.createMany({
+      await tx.fills.createMany({
         data: fills,
       });
+
+      // Group fills by maker order ID to update maker orders in DB
+      const makerFillsMap = new Map<string, bigint>();
+      for (const fill of data.fills) {
+        const makerOrderId =
+          fill.makerId === fill.LongUserId ? fill.buyOrderId : fill.sellOrderId;
+        if (makerOrderId) {
+          const prev = makerFillsMap.get(makerOrderId) || 0n;
+          makerFillsMap.set(makerOrderId, prev + BigInt(fill.qty));
+        }
+      }
+
+      for (const [makerOrderId, fillQty] of makerFillsMap.entries()) {
+        const makerOrder = await tx.orders.findUnique({
+          where: { id: makerOrderId },
+        });
+
+        if (makerOrder) {
+          const currentFilled = BigInt(makerOrder.filledQuantity || "0");
+          const newFilled = currentFilled + fillQty;
+          const totalQty = BigInt(makerOrder.quantity);
+          const newStatus: orderStatus =
+            newFilled >= totalQty ? "Filled" : "partiallyFilled";
+
+          await tx.orders.update({
+            where: { id: makerOrderId },
+            data: {
+              filledQuantity: newFilled.toString(),
+              status: newStatus,
+            },
+          });
+        }
+      }
     }
   });
 

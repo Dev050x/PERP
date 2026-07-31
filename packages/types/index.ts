@@ -9,6 +9,7 @@ export type Order = {
     market: string,
     side: "LONG" | "SHORT",
     qty: bigint,
+    filledQty: bigint,
     margin: bigint,
     type: "limit" | "market",
     price: bigint,

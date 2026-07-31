@@ -7,6 +7,7 @@ export async function cancelOrder(data: CancelOrderResponseData) {
   if (!data?.order?.orderId) return;
 
   const status = (data.order.status || "Cancel") as orderStatus;
+  const filledQuantity = data.order.filledQty || "0";
 
   await prisma.orders.updateMany({
     where: {
@@ -14,6 +15,7 @@ export async function cancelOrder(data: CancelOrderResponseData) {
     },
     data: {
       status,
+      filledQuantity,
     },
   });
 }
