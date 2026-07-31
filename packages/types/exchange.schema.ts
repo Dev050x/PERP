@@ -1,6 +1,6 @@
 import z, { string } from "zod";
 
-const PRECISION = 6;
+const PRECISION = 8;
 
 function precisionString(precision: number) {
     return z.string().refine(

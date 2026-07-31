@@ -17,10 +17,10 @@ export function CreateOrder(data: CreateOrderData) {
         data.price = toString(orderbookManager.getMarketPrice(data.userId, data.slippage!, data.side, data.market)!);
     }
 
-    if (!userManager.hasEnoughBalance(userOrder.userId, toBigInt(userOrder.margin, 6), "USDC")) {
+    if (!userManager.hasEnoughBalance(userOrder.userId, toBigInt(userOrder.margin, PRECISION), "USDC")) {
         throw new Error("Insufficient Balance");
     }
-    userManager.lockUserBalance(userOrder.userId, "USDC", toBigInt(userOrder.margin, 6));
+    userManager.lockUserBalance(userOrder.userId, "USDC", toBigInt(userOrder.margin, PRECISION));
 
     const remainQty = orderbookManager.matchOrder(userOrder, orderId);
     const filledQty = toBigInt(userOrder.qty, PRECISION) - remainQty;
