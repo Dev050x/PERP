@@ -163,6 +163,35 @@ export const withdrawUser = async (req: Request, res: Response, next: NextFuncti
     });
 }
 
+export const getUserBalance = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const userId = getUserId(req);
+    const correlationID = crypto.randomUUID();
+
+    await RedisManager.getInstance().publishMessage({
+        msg: "GetBalance",
+        data: {
+            userId,
+        },
+        correlationID,
+    });
+
+    const response = await waitForEngineResponse(correlationID, 5000);
+
+    if (response.error) {
+        res.status(400).json({
+            success: false,
+            error: response.error ? response.error : "some user error",
+        });
+        return;
+    }
+
+    const data = response.data;
+
+    res.status(200).json({
+        data,
+    });
+}
+
 export const initializeOrderbook = async (req: Request, res: Response, next: NextFunction) => {
     //TODO: need to protected by user
     const userId = getUserId(req);
