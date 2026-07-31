@@ -18,16 +18,6 @@ export async function createOrder(data: CreateOrderResponseData) {
             market: fill.market
         }
     }) : null;
-    const position = Object.keys(data.position).length > 0 ? {
-        userId: data.userId,
-        Side: data.position.side.toLocaleLowerCase() as side,
-        quantity: data.position.qty,
-        margin: data.position.margin,
-        liquidationPrice: data.position.liquidationPrice,
-        averagePrice: data.position.averagePrice,
-        market: data.position.market
-    } : null;
-
     const order = {
         quantity: data.order.qty,
         price: data.order.price,
@@ -47,13 +37,6 @@ export async function createOrder(data: CreateOrderResponseData) {
                 data: fills,
             });
         }
-
-        if (position) {
-            await prisma.position.create({
-                data: position,
-            });
-        }
-
     });
 
     updateCandles(data.order.market, Number(data.order.price), Number(data.order.qty));

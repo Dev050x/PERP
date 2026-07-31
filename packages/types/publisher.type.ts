@@ -6,6 +6,7 @@ export type EngineRequest =
   | InitializeOrderbookType
   | CancelOrderType
   | GetPositionType
+  | GetAllPositionsType
   | GetOpenOrders
   | GetOrders
   | GetFills
@@ -70,6 +71,16 @@ export type GetPositionType = {
 export type GetPositionData = {
   userId: string;
   marketId: string;
+};
+
+export type GetAllPositionsType = {
+  msg: "GetAllPositions";
+  correlationID: string;
+  data: GetAllPositionsData;
+};
+
+export type GetAllPositionsData = {
+  userId: string;
 };
 
 export type GetOrders = {

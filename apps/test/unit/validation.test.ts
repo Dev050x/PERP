@@ -35,9 +35,9 @@ describe("createOrderSchema", () => {
         expect(result.success).toBe(true);
     });
 
-    test("rejects precision exceeding 6 decimal places", () => {
+    test("rejects precision exceeding 8 decimal places", () => {
         const result = createOrderSchema.safeParse({
-            type: "limit", side: "LONG", qty: "1.1234567", price: "100.50", margin: "500", market: "SOL",
+            type: "limit", side: "LONG", qty: "1.123456789", price: "100.50", margin: "500", market: "SOL",
         });
         expect(result.success).toBe(false);
     });
