@@ -1,6 +1,7 @@
 export type EngineRequest =
   | OnRampType
   | WithdrawType
+  | GetBalanceType
   | CreateOrderType
   | InitializeOrderbookType
   | CancelOrderType
@@ -31,6 +32,16 @@ export type WithdrawType = {
   msg: "Withdraw";
   correlationID: string;
   data: WithdrawData;
+};
+
+export type GetBalanceData = {
+  userId: string;
+};
+
+export type GetBalanceType = {
+  msg: "GetBalance";
+  correlationID: string;
+  data: GetBalanceData;
 };
 
 export type CreateOrderType = {
