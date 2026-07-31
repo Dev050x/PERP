@@ -3,15 +3,12 @@ import { toString } from "./conversion";
 
 export function SerializableUserBalances(
     balances: Record<string, UserBalance>
-): Record<string, { availableBalance: string; lockedBalance: string }> {
-    const result: Record<string, { availableBalance: string; lockedBalance: string }> = {};
-    for (const asset in balances) {
-        result[asset] = {
-            availableBalance: balances[asset]!.availableBalance.toString(),
-            lockedBalance: balances[asset]!.lockedBalance.toString(),
-        };
-    }
-    return result;
+): { availableBalance: string; lockedBalance: string } {
+    const usdc = balances["USDC"] ?? { availableBalance: 0n, lockedBalance: 0n };
+    return {
+        availableBalance: toString(usdc.availableBalance),
+        lockedBalance: toString(usdc.lockedBalance),
+    };
 };
 
 export function SerializeData(data: Order | Fill | Position): Record<string, string> {

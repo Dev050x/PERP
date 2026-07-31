@@ -1,5 +1,6 @@
 export type EngineRequest =
   | OnRampType
+  | WithdrawType
   | CreateOrderType
   | InitializeOrderbookType
   | CancelOrderType
@@ -10,13 +11,26 @@ export type EngineRequest =
   | MarkPriceType
   | GetDepth;
 
+export type OnRampData = {
+  userId: string;
+  amount: string;
+};
+
 export type OnRampType = {
   msg: "OnRamp";
   correlationID: string;
-  data: {
-    userId: string;
-    amount: string;
-  };
+  data: OnRampData;
+};
+
+export type WithdrawData = {
+  userId: string;
+  amount: string;
+};
+
+export type WithdrawType = {
+  msg: "Withdraw";
+  correlationID: string;
+  data: WithdrawData;
 };
 
 export type CreateOrderType = {

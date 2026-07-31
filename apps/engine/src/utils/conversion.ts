@@ -19,7 +19,7 @@ export function toString(input: bigint): string {
     const whole = abs / SCALE;
     const fraction = abs % SCALE;
 
-    const fractionStr = fraction.toString().padStart(PRECISION, "0").replace("/0+$/", "");
+    const fractionStr = fraction.toString().padStart(PRECISION, "0").replace(/0+$/, "");
     const result = fractionStr.length > 0 ? `${whole}.${fractionStr}`: whole.toString();
 
     return result;

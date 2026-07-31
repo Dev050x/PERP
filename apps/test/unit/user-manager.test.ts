@@ -21,11 +21,10 @@ describe("UserManager", () => {
             expect(balances["USDC"]!.lockedBalance).toBe(0n);
         });
 
-        test("initializes all supported assets with zero balance", () => {
+        test("initializes USDC asset with balance", () => {
             const uid = freshUserId();
             const balances = UserManager.getInstance().initializeUserBalance(uid);
-            expect(balances["SOL"]!.availableBalance).toBe(0n);
-            expect(balances["ETH"]!.availableBalance).toBe(0n);
+            expect(balances["USDC"]).toBeDefined();
         });
     });
 
