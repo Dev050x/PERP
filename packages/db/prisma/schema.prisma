@@ -44,16 +44,17 @@ model Fills {
 }
 
 model Orders {
-  id        String   @id @default(uuid())
+  id        String      @id @default(uuid())
   quantity  String
   price     String
   side      side
   type      type
+  status    orderStatus @default(open)
   userId    String
   market    String
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  user      User        @relation(fields: [userId], references: [id])
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 }
 
 model Candle {
@@ -77,4 +78,12 @@ enum side {
 enum type {
   limit
   market
+}
+
+enum orderStatus {
+  open
+  partiallyFilled
+  Filled
+  Close
+  Cancel
 }
