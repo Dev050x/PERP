@@ -7,8 +7,6 @@ export type EngineRequest =
   | CancelOrderType
   | GetPositionType
   | GetAllPositionsType
-  | GetOpenOrders
-  | GetOrders
   | GetFills
   | MarkPriceType
   | GetDepth;
@@ -83,23 +81,6 @@ export type GetAllPositionsData = {
   userId: string;
 };
 
-export type GetOrders = {
-  msg: "GetOrders";
-  correlationID: string;
-  data: GetOpenOrdersData;
-};
-
-export type GetOpenOrders = {
-  msg: "GetOpenOrders";
-  correlationID: string;
-  data: GetOpenOrdersData;
-};
-
-export type GetOpenOrdersData = {
-  userId: string;
-  marketId: string;
-};
-
 export type GetFills = {
   msg: "GetFills";
   correlationID: string;
@@ -108,11 +89,6 @@ export type GetFills = {
 
 export type GetFillsData = {
   userId: string;
-};
-
-export type GetOrdersData = {
-  userId: string;
-  marketId: string;
 };
 
 export type CreateOrderData = {

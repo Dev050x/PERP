@@ -4,7 +4,6 @@ import { CreateOrder, InitializeOrderBook } from "./controllers/create-order";
 import { CancelOrder } from "./controllers/cancel-order";
 import { debugState } from "./utils/debug";
 import { GetAllPositions, GetPosition } from "./controllers/get-position";
-import { getOpenOrders, getOrders } from "./controllers/get-orders";
 import { getFill } from "./controllers/get-fills";
 import { markPrice } from "./controllers/mark-price";
 import { getDepth } from "./controllers/get-depth";
@@ -35,10 +34,6 @@ export function handleEngineRequest(data: EngineRequest) {
     return GetPosition(data.data);
   } else if (data.msg === "GetAllPositions") {
     return GetAllPositions(data.data);
-  } else if (data.msg === "GetOrders") {
-    return getOrders(data.data);
-  } else if (data.msg === "GetOpenOrders") {
-    return getOpenOrders(data.data);
   } else if (data.msg === "GetFills") {
     return getFill(data.data);
   } else if (data.msg === "MarkPrice") {

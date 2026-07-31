@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { prisma } from "db";
 import { getUserId } from "../utils/auth";
 import { RedisManager } from "../store/redis-manager";
 import { waitForEngineResponse } from "../utils/pending-response";
@@ -289,7 +290,6 @@ export const getAllPositions = async (req: Request, res: Response): Promise<void
 
 export const getOrders = async (req: Request, res: Response) => {
     const userId = getUserId(req);
-    const correlationID = crypto.randomUUID();
     const parsedBody = getOrdersSchema.safeParse(req.params);
 
     if (!parsedBody.success) {
@@ -297,31 +297,31 @@ export const getOrders = async (req: Request, res: Response) => {
         return;
     }
 
-
-    await RedisManager.getInstance().publishMessage({
-        msg: "GetOpenOrders",
-        data: {
-            userId,
-            marketId: parsedBody.data.marketId
-
-        },
-        correlationID
-    });
-
-    const response = await waitForEngineResponse(correlationID, 5000);
-
-    if (response.error) {
-        res.status(400).json({
-            success: false,
-            error: response.error ? response.error : "some user error",
+    try {
+        const orders = await prisma.orders.findMany({
+            where: {
+                userId,
+                market: parsedBody.data.marketId,
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
         });
-        return;
-    }
 
-    res.status(200).json({
-        data: response.data,
-    });
-}
+        res.status(200).json({
+            success: true,
+            msg: "Orders fetched successfully",
+            data: {
+                orders,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: "Failed to fetch orders from database",
+        });
+    }
+};
 
 export const getOpenOrders = async (req: Request, res: Response) => {
     const userId = getUserId(req);
@@ -332,32 +332,34 @@ export const getOpenOrders = async (req: Request, res: Response) => {
         return;
     }
 
-    const correlationID = crypto.randomUUID();
-
-    await RedisManager.getInstance().publishMessage({
-        msg: "GetOpenOrders",
-        data: {
-            userId,
-            marketId: parsedBody.data.marketId
-
-        },
-        correlationID
-    });
-
-    const response = await waitForEngineResponse(correlationID, 5000);
-
-    if (response.error) {
-        res.status(400).json({
-            success: false,
-            error: response.error ? response.error : "some user error",
+    try {
+        const openOrders = await prisma.orders.findMany({
+            where: {
+                userId,
+                market: parsedBody.data.marketId,
+                status: {
+                    in: ["open", "partiallyFilled"],
+                },
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
         });
-        return;
-    }
 
-    res.status(200).json({
-        data: response.data,
-    });
-}
+        res.status(200).json({
+            success: true,
+            msg: "Open orders fetched successfully",
+            data: {
+                orders: openOrders,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: "Failed to fetch open orders from database",
+        });
+    }
+};
 
 export const getFills = async (req: Request, res: Response) => {
     const userId = getUserId(req);
