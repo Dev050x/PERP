@@ -54,3 +54,11 @@ export const getOrdersSchema = z.object({
 export const getDepthSchema = z.object({
     marketId: string(),
 });
+
+export const getCandlesSchema = z.object({
+    marketId: z.string(),
+    interval: z.enum(["1m", "5m", "15m", "1h", "4h", "1d"]).optional().default("1m"),
+    startTime: z.string().optional(),
+    endTime: z.string().optional(),
+    limit: z.string().optional(),
+});

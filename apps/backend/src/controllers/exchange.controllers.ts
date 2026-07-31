@@ -3,8 +3,9 @@ import { prisma } from "db";
 import { getUserId } from "../utils/auth";
 import { RedisManager } from "../store/redis-manager";
 import { waitForEngineResponse } from "../utils/pending-response";
-import { createOrderSchema, deleteOrderSchema, getDepthSchema, getOrdersSchema, getPositionSchema, onrampSchema, withdrawSchema } from "types/exchange";
+import { createOrderSchema, deleteOrderSchema, getCandlesSchema, getDepthSchema, getOrdersSchema, getPositionSchema, onrampSchema, withdrawSchema } from "types/exchange";
 import { sendValidationError } from "../utils/validation";
+import { aggregateCandles } from "../utils/candle-aggregator";
 
 export const createOrder = async (req: Request, res: Response, next: NextFunction) => {
     const userId = getUserId(req);
@@ -420,3 +421,54 @@ export const getDepth = async (req: Request, res: Response) => {
         ...response.data
     });
 }
+
+export const getCandles = async (req: Request, res: Response) => {
+    const parsedParams = getCandlesSchema.safeParse({
+        marketId: req.params.marketId,
+        interval: req.query.interval,
+        startTime: req.query.startTime,
+        endTime: req.query.endTime,
+        limit: req.query.limit,
+    });
+
+    if (!parsedParams.success) {
+        sendValidationError(res, parsedParams.error);
+        return;
+    }
+
+    const { marketId, interval, startTime, endTime, limit } = parsedParams.data;
+    const limitNum = limit ? Math.min(parseInt(limit, 10), 1000) : 500;
+
+    try {
+        const dbCandles = await prisma.candle.findMany({
+            where: {
+                market: marketId,
+                timestamp: {
+                    gte: startTime ? new Date(Number(startTime) * (Number(startTime) < 1e11 ? 1000 : 1)) : undefined,
+                    lte: endTime ? new Date(Number(endTime) * (Number(endTime) < 1e11 ? 1000 : 1)) : undefined,
+                },
+            },
+            orderBy: {
+                timestamp: "asc",
+            },
+            take: limitNum,
+        });
+
+        const formattedCandles = aggregateCandles(dbCandles, interval as any);
+
+        res.status(200).json({
+            success: true,
+            msg: "Candles fetched successfully",
+            data: {
+                market: marketId,
+                interval,
+                candles: formattedCandles,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: "Failed to fetch candle data from database",
+        });
+    }
+};
