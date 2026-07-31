@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { getUserId } from "../utils/auth";
 import { RedisManager } from "../store/redis-manager";
 import { waitForEngineResponse } from "../utils/pending-response";
-import { createOrderSchema, deleteOrderSchema, getDepthSchema, getOrdersSchema, getPositionSchema } from "types/exchange";
+import { createOrderSchema, deleteOrderSchema, getDepthSchema, getOrdersSchema, getPositionSchema, onrampSchema } from "types/exchange";
 import { sendValidationError } from "../utils/validation";
 import { PositionScalarFieldEnum } from "../../../../packages/db/generated/prisma/internal/prismaNamespace";
 
@@ -92,12 +92,23 @@ export const deleteOrder = async (req: Request, res: Response) => {
 
 export const onrampUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const userId = getUserId(req);
+    const parsedBody = onrampSchema.safeParse(req.body);
+
+    if (!parsedBody.success) {
+        res.status(400).json({
+            success: false,
+            msg: "Please Provide Proper Inputs",
+        });
+        return;
+    }
 
     const correlationID = crypto.randomUUID();
     await RedisManager.getInstance().publishMessage({
         msg: "OnRamp",
         data: {
-            userId
+            userId,
+            amount: parsedBody.data.amount
+
         },
         correlationID,
     });

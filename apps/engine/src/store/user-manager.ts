@@ -5,9 +5,7 @@ import { LiquidationManager } from "./liquidation-manager";
 import { getLatestSnapshotCached } from "../utils/snanpshot";
 
 export const supported_asset = ["SOL", "ETH", "USDC"];
-const HARD_CORDED_USER = "ce79888d-8889-4c4f-8f2d-3fd4a7bb2d8f";
-const HARD_CORDED_USER_1 = "50fc21c2-cf9b-4052-9f58-98be05c91e08";
-const HARD_CORDED_USER_2 = "6da9a93a-2aa7-496d-9be2-3c82bb0427b3";
+
 
 export class UserManager {
     private static instance: UserManager;
@@ -26,10 +24,6 @@ export class UserManager {
         if (latest) {
             this.users = latest.users;
             this.Balances = latest.balances;
-        } else {
-            this.initializeUserBalance(HARD_CORDED_USER);
-            this.initializeUserBalance(HARD_CORDED_USER_1);
-            this.initializeUserBalance(HARD_CORDED_USER_2);
         }
     }
 
@@ -211,7 +205,7 @@ export class UserManager {
         }
     }
 
-    public initializeUserBalance(userId: string) {
+    public initializeUserBalance(userId: string, amount: bigint = 10000_000_000n) {
         const userBal = this.Balances.set(userId, {}).get(userId);
         if (!userBal) {
             throw new Error("user does not exists");
@@ -225,7 +219,7 @@ export class UserManager {
             }
         }
         if (userBal["USDC"]) {
-            userBal["USDC"].availableBalance += 10000_000_000n;
+            userBal["USDC"].availableBalance += amount;
         }
         this.users.set(userId, {
             orders: new Map(),

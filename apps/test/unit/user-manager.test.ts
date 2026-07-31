@@ -17,15 +17,15 @@ describe("UserManager", () => {
         test("creates user with 10,000 USDC available balance", () => {
             const uid = freshUserId();
             const balances = UserManager.getInstance().initializeUserBalance(uid);
-            expect(balances["USDC"].availableBalance).toBe(10000_000_000n);
-            expect(balances["USDC"].lockedBalance).toBe(0n);
+            expect(balances["USDC"]!.availableBalance).toBe(10000_000_000n);
+            expect(balances["USDC"]!.lockedBalance).toBe(0n);
         });
 
         test("initializes all supported assets with zero balance", () => {
             const uid = freshUserId();
             const balances = UserManager.getInstance().initializeUserBalance(uid);
-            expect(balances["SOL"].availableBalance).toBe(0n);
-            expect(balances["ETH"].availableBalance).toBe(0n);
+            expect(balances["SOL"]!.availableBalance).toBe(0n);
+            expect(balances["ETH"]!.availableBalance).toBe(0n);
         });
     });
 
@@ -50,8 +50,8 @@ describe("UserManager", () => {
             um.initializeUserBalance(uid);
             um.lockUserBalance(uid, "USDC", scaled("500"));
             const bal = um.getUserBalances(uid)!;
-            expect(bal["USDC"].availableBalance).toBe(10000_000_000n - scaled("500"));
-            expect(bal["USDC"].lockedBalance).toBe(scaled("500"));
+            expect(bal["USDC"]!.availableBalance).toBe(10000_000_000n - scaled("500"));
+            expect(bal["USDC"]!.lockedBalance).toBe(scaled("500"));
         });
 
         test("unlock reverses the lock", () => {
@@ -61,8 +61,8 @@ describe("UserManager", () => {
             um.lockUserBalance(uid, "USDC", scaled("500"));
             um.unlockUserBalance(uid, "USDC", scaled("500"));
             const bal = um.getUserBalances(uid)!;
-            expect(bal["USDC"].availableBalance).toBe(10000_000_000n);
-            expect(bal["USDC"].lockedBalance).toBe(0n);
+            expect(bal["USDC"]!.availableBalance).toBe(10000_000_000n);
+            expect(bal["USDC"]!.lockedBalance).toBe(0n);
         });
     });
 

@@ -31,6 +31,9 @@ export const createOrderSchema = z.discriminatedUnion("type", [
     })
 ]);
 
+export const onrampSchema = z.object({
+    amount: string(),
+});
 
 export const deleteOrderSchema = z.object({
     orderId: string(),

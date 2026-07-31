@@ -1,6 +1,6 @@
 import type { EngineRequest } from "types/publisher";
 import { RedisManager } from "./store/redis-manager";
-import { CreateOrder,InitializeOrderBook} from "./controllers/create-order";
+import { CreateOrder, InitializeOrderBook } from "./controllers/create-order";
 import { CancelOrder } from "./controllers/cancel-order";
 import { debugState } from "./utils/debug";
 import { GetPosition } from "./controllers/get-position";
@@ -16,29 +16,28 @@ import { LiquidationManager } from "./store/liquidation-manager";
 import { OrderBookManager } from "./store/orderbook-manager";
 import { replayMissedMessages } from "./utils/replay-message";
 
-
 export function handleEngineRequest(data: EngineRequest) {
-    if (data.msg === "OnRamp") {
-        return OnRamp(data);
-    }else if(data.msg === "CreateOrder"){
-        return CreateOrder(data.data);
-    }else if(data.msg === "InitializeOrderBook") {
-        return InitializeOrderBook(data);
-    }else if(data.msg === "CancelOrder") {
-        return CancelOrder(data.data);
-    }else if(data.msg === "GetPosition") {
-        return GetPosition(data.data);
-    }else if(data.msg === "GetOrders") {
-        return getOrders(data.data)
-    }else if(data.msg === "GetOpenOrders"){
-        return getOpenOrders(data.data)
-    }else if(data.msg === "GetFills") {
-        return getFill(data.data);
-    }else if(data.msg === "MarkPrice") {
-        markPrice(data.data);
-    }else if(data.msg === "GetDepth") {
-        return getDepth(data.data.market);
-    }
+  if (data.msg === "OnRamp") {
+    return OnRamp(data);
+  } else if (data.msg === "CreateOrder") {
+    return CreateOrder(data.data);
+  } else if (data.msg === "InitializeOrderBook") {
+    return InitializeOrderBook(data);
+  } else if (data.msg === "CancelOrder") {
+    return CancelOrder(data.data);
+  } else if (data.msg === "GetPosition") {
+    return GetPosition(data.data);
+  } else if (data.msg === "GetOrders") {
+    return getOrders(data.data);
+  } else if (data.msg === "GetOpenOrders") {
+    return getOpenOrders(data.data);
+  } else if (data.msg === "GetFills") {
+    return getFill(data.data);
+  } else if (data.msg === "MarkPrice") {
+    markPrice(data.data);
+  } else if (data.msg === "GetDepth") {
+    return getDepth(data.data.market);
+  }
 }
 
 console.log("initializing engine state...");
@@ -54,45 +53,43 @@ console.log("starting the snapshot service...");
 void snapshot();
 console.log("snapshot service started...");
 
-console.log("starting the fundingRate service...")
+console.log("starting the fundingRate service...");
 void fundingRate();
-console.log("fundingRate service started...")
+console.log("fundingRate service started...");
 
 let lastId = RedisManager.getInstance().getLastOffset() || "$";
 
 while (1) {
-    const redisManager = RedisManager.getInstance();
+  const redisManager = RedisManager.getInstance();
 
-    const item = await redisManager.readDataFromStream(lastId);
-    const raw_data= item?.[0]?.messages?.[0]?.message["message"];
-    if(!raw_data) continue;
-    
-    let entryId = item[0]?.messages[0]?.id!
-    redisManager.setLastOffset(entryId);
-    lastId = entryId;
+  const item = await redisManager.readDataFromStream(lastId);
+  const raw_data = item?.[0]?.messages?.[0]?.message["message"];
+  if (!raw_data) continue;
 
-    const received_data: EngineRequest = JSON.parse(raw_data);
+  let entryId = item[0]?.messages[0]?.id!;
+  redisManager.setLastOffset(entryId);
+  lastId = entryId;
 
-    try {
-        const response_data = handleEngineRequest(received_data)!;
-        if(!response_data) {
-            continue;
-        }
-        await RedisManager.getInstance().publishData({
-            msg: received_data.msg,
-            correlationId: received_data.correlationID,
-            ok: true,
-            data: response_data,
-        });
-        debugState();
+  const received_data: EngineRequest = JSON.parse(raw_data);
 
-    } catch (error) {
-        console.log("caught some error for user request", error);
-        await RedisManager.getInstance().publishData({
-            correlationId: received_data.correlationID,
-            ok: false,
-            error: error instanceof Error ? error.message : "engine_error"
-        });
+  try {
+    const response_data = handleEngineRequest(received_data)!;
+    if (!response_data) {
+      continue;
     }
-
+    await RedisManager.getInstance().publishData({
+      msg: received_data.msg,
+      correlationId: received_data.correlationID,
+      ok: true,
+      data: response_data,
+    });
+    debugState();
+  } catch (error) {
+    console.log("caught some error for user request", error);
+    await RedisManager.getInstance().publishData({
+      correlationId: received_data.correlationID,
+      ok: false,
+      error: error instanceof Error ? error.message : "engine_error",
+    });
+  }
 }

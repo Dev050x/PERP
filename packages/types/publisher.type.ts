@@ -1,122 +1,133 @@
-export type EngineRequest = OnRampType | CreateOrderType | InitializeOrderbookType | CancelOrderType | GetPositionType | GetOpenOrders | GetOrders | GetFills | MarkPriceType | GetDepth;
+export type EngineRequest =
+  | OnRampType
+  | CreateOrderType
+  | InitializeOrderbookType
+  | CancelOrderType
+  | GetPositionType
+  | GetOpenOrders
+  | GetOrders
+  | GetFills
+  | MarkPriceType
+  | GetDepth;
 
 export type OnRampType = {
-    msg: "OnRamp",
-    correlationID: string,
-    data: {
-        userId: string,
-    }
+  msg: "OnRamp";
+  correlationID: string;
+  data: {
+    userId: string;
+    amount: string;
+  };
 };
 
 export type CreateOrderType = {
-    msg: "CreateOrder",
-    correlationID: string,
-    data: CreateOrderData,
-}
+  msg: "CreateOrder";
+  correlationID: string;
+  data: CreateOrderData;
+};
 
 export type CancelOrderType = {
-    msg: "CancelOrder",
-    correlationID: string,
-    data: CancelOrderData
-}
+  msg: "CancelOrder";
+  correlationID: string;
+  data: CancelOrderData;
+};
 
 export type CancelOrderData = {
-    userId: string,
-    orderId: string,
-}
+  userId: string;
+  orderId: string;
+};
 
 export type GetPositionType = {
-    msg: "GetPosition",
-    correlationID: string,
-    data: GetPositionData
-}
+  msg: "GetPosition";
+  correlationID: string;
+  data: GetPositionData;
+};
 
 export type GetPositionData = {
-    userId: string,
-    marketId: string,
-}
+  userId: string;
+  marketId: string;
+};
 
 export type GetOrders = {
-    msg: "GetOrders",
-    correlationID: string,
-    data: GetOpenOrdersData,
-}
+  msg: "GetOrders";
+  correlationID: string;
+  data: GetOpenOrdersData;
+};
 
 export type GetOpenOrders = {
-    msg: "GetOpenOrders",
-    correlationID: string,
-    data: GetOpenOrdersData,
-}
+  msg: "GetOpenOrders";
+  correlationID: string;
+  data: GetOpenOrdersData;
+};
 
 export type GetOpenOrdersData = {
-    userId: string,
-    marketId: string
-}
+  userId: string;
+  marketId: string;
+};
 
 export type GetFills = {
-    msg: "GetFills",
-    correlationID: string,
-    data: GetFillsData
-}
+  msg: "GetFills";
+  correlationID: string;
+  data: GetFillsData;
+};
 
 export type GetFillsData = {
-    userId: string,
-}
+  userId: string;
+};
 
 export type GetOrdersData = {
-    userId: string,
-    marketId: string
-}
+  userId: string;
+  marketId: string;
+};
 
 export type CreateOrderData = {
-    userId: string,
-    qty: string,
-    price?: string,
-    margin: string,
-    side: "LONG" | "SHORT",
-    type: "limit" | "market",
-    market: string,
-    slippage?: string,
-}
+  userId: string;
+  qty: string;
+  price?: string;
+  margin: string;
+  side: "LONG" | "SHORT";
+  type: "limit" | "market";
+  market: string;
+  slippage?: string;
+};
 
 export type InitializeOrderbookType = {
-    msg: "InitializeOrderBook",
-    correlationID: string,
-    data: {
-        userId: string,
-    }
-}
+  msg: "InitializeOrderBook";
+  correlationID: string;
+  data: {
+    userId: string;
+  };
+};
 
 export type MarkPriceType = {
-    msg: "MarkPrice",
-    correlationID: string
-    data: MarkPriceData
-}
+  msg: "MarkPrice";
+  correlationID: string;
+  data: MarkPriceData;
+};
 
 export type MarkPriceData = {
-    prices: StreamData[]
-    userId: string,
-}
+  prices: StreamData[];
+  userId: string;
+};
 
 export interface StreamData {
-    e: string,
-    E: number,
-    s: string,
-    p: string,
-    ap: string,
-    i: string,
-    P: string,
-    r: string,
-    T: number
+  e: string;
+  E: number;
+  s: string;
+  p: string;
+  ap: string;
+  i: string;
+  P: string;
+  r: string;
+  T: number;
 }
 
 export type GetDepth = {
-    msg: "GetDepth",
-    correlationID: string,
-    data: GetDepthData
-}
+  msg: "GetDepth";
+  correlationID: string;
+  data: GetDepthData;
+};
 
 export type GetDepthData = {
-    userId: string,
-    market: string
-}
+  userId: string;
+  market: string;
+};
