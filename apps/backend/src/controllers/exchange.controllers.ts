@@ -4,7 +4,6 @@ import { RedisManager } from "../store/redis-manager";
 import { waitForEngineResponse } from "../utils/pending-response";
 import { createOrderSchema, deleteOrderSchema, getDepthSchema, getOrdersSchema, getPositionSchema, onrampSchema, withdrawSchema } from "types/exchange";
 import { sendValidationError } from "../utils/validation";
-import { PositionScalarFieldEnum } from "../../../../packages/db/generated/prisma/internal/prismaNamespace";
 
 export const createOrder = async (req: Request, res: Response, next: NextFunction) => {
     const userId = getUserId(req);
@@ -254,6 +253,34 @@ export const getPostiion = async (req: Request, res: Response) => {
     });
 
 }
+
+export const getAllPositions = async (req: Request, res: Response): Promise<void> => {
+    const userId = getUserId(req);
+    const correlationID = crypto.randomUUID();
+
+    await RedisManager.getInstance().publishMessage({
+        msg: "GetAllPositions",
+        data: {
+            userId,
+        },
+        correlationID,
+    });
+
+    const response = await waitForEngineResponse(correlationID, 5000);
+
+    if (response.error) {
+        res.status(400).json({
+            success: false,
+            error: response.error ? response.error : "some user error",
+        });
+        return;
+    }
+
+    res.status(200).json({
+        msg: "here are all positions",
+        data: response.data,
+    });
+};
 
 export const getOrders = async (req: Request, res: Response) => {
     const userId = getUserId(req);
