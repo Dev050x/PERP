@@ -9,6 +9,7 @@ import { getFill } from "./controllers/get-fills";
 import { markPrice } from "./controllers/mark-price";
 import { getDepth } from "./controllers/get-depth";
 import { OnRamp } from "./controllers/onramp";
+import { Withdraw } from "./controllers/withdraw";
 import { snapshot } from "./utils/snanpshot";
 import { fundingRate } from "./controllers/funding-rate";
 import { UserManager } from "./store/user-manager";
@@ -19,6 +20,8 @@ import { replayMissedMessages } from "./utils/replay-message";
 export function handleEngineRequest(data: EngineRequest) {
   if (data.msg === "OnRamp") {
     return OnRamp(data);
+  } else if (data.msg === "Withdraw") {
+    return Withdraw(data);
   } else if (data.msg === "CreateOrder") {
     return CreateOrder(data.data);
   } else if (data.msg === "InitializeOrderBook") {

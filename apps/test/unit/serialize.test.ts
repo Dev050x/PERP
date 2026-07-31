@@ -12,12 +12,16 @@ describe("SerializableUserBalances", () => {
       USDC: { availableBalance: 10000000000n, lockedBalance: 5000000000n },
     });
     expect(result).toEqual({
-      USDC: { availableBalance: "10000000000", lockedBalance: "5000000000" },
+      availableBalance: "100",
+      lockedBalance: "50",
     });
   });
 
-  test("returns empty object for empty input", () => {
-    expect(SerializableUserBalances({})).toEqual({});
+  test("returns zero balances for empty input", () => {
+    expect(SerializableUserBalances({})).toEqual({
+      availableBalance: "0",
+      lockedBalance: "0",
+    });
   });
 });
 

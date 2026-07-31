@@ -1,5 +1,6 @@
-    import BTree from "sorted-btree";
-    import { supported_asset, UserManager } from "./user-manager";
+import BTree from "sorted-btree";
+import { UserManager } from "./user-manager";
+import { supported_markets } from "./orderbook-manager";
 import { getLatestSnapshotCached } from "../utils/snanpshot";
 
     export class LiquidationManager {
@@ -31,7 +32,7 @@ import { getLatestSnapshotCached } from "../utils/snanpshot";
 
         public initializeLiquidation() {
             const latest = getLatestSnapshotCached();
-            for (const asset of supported_asset) {
+            for (const asset of supported_markets) {
                 this.liquidationLongs.set(asset, latest?.liquidationLongs.get(asset) ?? new BTree());
                 this.liquidationShorts.set(asset, latest?.liquidationShorts.get(asset) ?? new BTree());
             }

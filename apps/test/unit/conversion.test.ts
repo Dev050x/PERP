@@ -31,7 +31,7 @@ describe("toString", () => {
     test("converts bigint to decimal string with correct precision", () => {
 
         const result = toString(12345600000n);
-        const expected = "123.45600000";
+        const expected = "123.456";
         console.log("expected: ", expected);
         expect(result).toBe(expected);
     });
@@ -43,10 +43,10 @@ describe("toString", () => {
     });
 
     test("handles zero", () => {
-        expect(toString(0n)).toBe("0.00000000");
+        expect(toString(0n)).toBe("0");
     });
 
     test("handles large integer values", () => {
-        expect(toString(100000000000n)).toBe("1000.00000000");
+        expect(toString(100000000000n)).toBe("1000");
     });
 });

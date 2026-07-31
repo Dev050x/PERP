@@ -4,7 +4,7 @@ import { calculateAveragePrice, calculateLiquidationPrice, calculateUnrealPnl } 
 import { LiquidationManager } from "./liquidation-manager";
 import { getLatestSnapshotCached } from "../utils/snanpshot";
 
-export const supported_asset = ["SOL", "ETH", "USDC"];
+export const supported_asset = ["USDC"];
 
 
 export class UserManager {
@@ -97,7 +97,7 @@ export class UserManager {
     public closeUserPosition(position: Position, price: bigint) {
         const unPnl = calculateUnrealPnl(position, price);
         const relFund = position.margin + unPnl;
-        const userBal = this.getUserBalances(position.userId)![position.market]!;
+        const userBal = this.getUserBalances(position.userId)!["USDC"]!;
         userBal.availableBalance += relFund < 0n ? 0n : relFund;
         userBal.lockedBalance -= position.margin;
         this.getUser(position.userId)?.positions.delete(position.market);
@@ -118,7 +118,7 @@ export class UserManager {
         margin: bigint,
     ) {
         const user = this.getUser(userId)!;
-        const userBal = this.getUserBalances(userId)![market]!;
+        const userBal = this.getUserBalances(userId)!["USDC"]!;
         const exisPos = user.positions.get(market);
         if (exisPos) {
             //same side
@@ -206,9 +206,14 @@ export class UserManager {
     }
 
     public initializeUserBalance(userId: string, amount: bigint = 10000_000_000n) {
-        const userBal = this.Balances.set(userId, {}).get(userId);
+        let userBal = this.Balances.get(userId);
         if (!userBal) {
-            throw new Error("user does not exists");
+            userBal = {};
+            this.Balances.set(userId, userBal);
+            this.users.set(userId, {
+                orders: new Map(),
+                positions: new Map(),
+            });
         }
         for (const asset of supported_asset) {
             if (!userBal[asset]) {
@@ -221,11 +226,16 @@ export class UserManager {
         if (userBal["USDC"]) {
             userBal["USDC"].availableBalance += amount;
         }
-        this.users.set(userId, {
-            orders: new Map(),
-            positions: new Map(),
-        });
         return this.Balances.get(userId)!;
+    }
+
+    public withdrawUserBalance(userId: string, amount: bigint) {
+        if (!this.hasEnoughBalance(userId, amount, "USDC")) {
+            throw new Error("Insufficient Balance");
+        }
+        const userBal = this.getUserBalances(userId)!;
+        userBal["USDC"]!.availableBalance -= amount;
+        return userBal;
     }
 
     public addAssetInUserBalance(userId: string) {

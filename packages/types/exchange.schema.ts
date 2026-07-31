@@ -35,6 +35,10 @@ export const onrampSchema = z.object({
     amount: string(),
 });
 
+export const withdrawSchema = z.object({
+    amount: string(),
+});
+
 export const deleteOrderSchema = z.object({
     orderId: string(),
 })

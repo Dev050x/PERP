@@ -6,6 +6,8 @@ import { calculateMargin } from "../utils/calculation";
 import LinkedList from "dbly-linked-list";
 import { getLatestSnapshotCached } from "../utils/snanpshot";
 
+export const supported_markets = ["SOL", "ETH", "USDC"];
+
 export class OrderBookManager {
     private static instance: OrderBookManager;
     private orderbooks: Map<string, orderbook>;
@@ -102,7 +104,7 @@ export class OrderBookManager {
     public initializeOrderBooks() {
         const latest = getLatestSnapshotCached();
 
-        for (const asset of supported_asset) {
+        for (const asset of supported_markets) {
             if (!this.orderbooks.get(asset)) {
                 const savedOrderbook = latest?.orderbook.get(asset);
 

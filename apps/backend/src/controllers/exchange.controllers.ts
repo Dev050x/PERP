@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { getUserId } from "../utils/auth";
 import { RedisManager } from "../store/redis-manager";
 import { waitForEngineResponse } from "../utils/pending-response";
-import { createOrderSchema, deleteOrderSchema, getDepthSchema, getOrdersSchema, getPositionSchema, onrampSchema } from "types/exchange";
+import { createOrderSchema, deleteOrderSchema, getDepthSchema, getOrdersSchema, getPositionSchema, onrampSchema, withdrawSchema } from "types/exchange";
 import { sendValidationError } from "../utils/validation";
 import { PositionScalarFieldEnum } from "../../../../packages/db/generated/prisma/internal/prismaNamespace";
 
@@ -117,10 +117,50 @@ export const onrampUser = async (req: Request, res: Response, next: NextFunction
     const data = response.data;
 
     res.status(200).json({
-        msg: "Your wallet balance has been set up successfully.",
+        msg: "deposit completed successfully.",
         data,
     })
 
+}
+
+export const withdrawUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const userId = getUserId(req);
+    const parsedBody = withdrawSchema.safeParse(req.body);
+
+    if (!parsedBody.success) {
+        res.status(400).json({
+            success: false,
+            msg: "Please Provide Proper Inputs",
+        });
+        return;
+    }
+
+    const correlationID = crypto.randomUUID();
+    await RedisManager.getInstance().publishMessage({
+        msg: "Withdraw",
+        data: {
+            userId,
+            amount: parsedBody.data.amount,
+        },
+        correlationID,
+    });
+
+    const response = await waitForEngineResponse(correlationID, 5000);
+
+    if (response.error) {
+        res.status(400).json({
+            success: false,
+            error: response.error ? response.error : "some user error",
+        });
+        return;
+    }
+
+    const data = response.data;
+
+    res.status(200).json({
+        msg: "Withdrawal completed successfully.",
+        data,
+    });
 }
 
 export const initializeOrderbook = async (req: Request, res: Response, next: NextFunction) => {
