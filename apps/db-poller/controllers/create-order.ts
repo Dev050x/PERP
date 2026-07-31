@@ -16,7 +16,7 @@ export async function createOrder(data: CreateOrderResponseData) {
             longOrderId: fill.buyOrderId,
             shortOrderId: fill.sellOrderId,
             price: fill.price,
-            quantity: fill.price,
+            quantity: fill.qty,
             market: fill.market,
           };
         })

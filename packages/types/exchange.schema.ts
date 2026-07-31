@@ -62,3 +62,8 @@ export const getCandlesSchema = z.object({
     endTime: z.string().optional(),
     limit: z.string().optional(),
 });
+
+export const getTradesSchema = z.object({
+    marketId: z.string(),
+    limit: z.string().optional(),
+});

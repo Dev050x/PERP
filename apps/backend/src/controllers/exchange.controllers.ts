@@ -3,7 +3,7 @@ import { prisma } from "db";
 import { getUserId } from "../utils/auth";
 import { RedisManager } from "../store/redis-manager";
 import { waitForEngineResponse } from "../utils/pending-response";
-import { createOrderSchema, deleteOrderSchema, getCandlesSchema, getDepthSchema, getOrdersSchema, getPositionSchema, onrampSchema, withdrawSchema } from "types/exchange";
+import { createOrderSchema, deleteOrderSchema, getCandlesSchema, getDepthSchema, getOrdersSchema, getPositionSchema, getTradesSchema, onrampSchema, withdrawSchema } from "types/exchange";
 import { sendValidationError } from "../utils/validation";
 import { aggregateCandles } from "../utils/candle-aggregator";
 
@@ -469,6 +469,57 @@ export const getCandles = async (req: Request, res: Response) => {
         res.status(500).json({
             success: false,
             error: "Failed to fetch candle data from database",
+        });
+    }
+};
+
+export const getRecentTrades = async (req: Request, res: Response) => {
+    const parsedParams = getTradesSchema.safeParse({
+        marketId: req.params.marketId,
+        limit: req.query.limit,
+    });
+
+    if (!parsedParams.success) {
+        sendValidationError(res, parsedParams.error);
+        return;
+    }
+
+    const { marketId, limit } = parsedParams.data;
+    const limitNum = limit ? Math.min(parseInt(limit, 10), 100) : 50;
+
+    try {
+        const fills = await prisma.fills.findMany({
+            where: {
+                market: marketId,
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+            take: limitNum,
+        });
+
+        const trades = fills.map((f) => ({
+            id: f.id,
+            price: f.price,
+            quantity: f.quantity,
+            makerId: f.makerId,
+            takerId: f.takerId,
+            timestamp: Math.floor(new Date(f.createdAt).getTime() / 1000),
+            createdAt: f.createdAt,
+        }));
+
+        res.status(200).json({
+            success: true,
+            msg: "Recent trades fetched successfully",
+            data: {
+                market: marketId,
+                trades,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: "Failed to fetch trade data from database",
         });
     }
 };

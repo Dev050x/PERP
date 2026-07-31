@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../utils/auth";
 import { asyncHandler } from "../utils/async-handler";
-import { createOrder, deleteOrder, getAllPositions, getCandles, getDepth, getFills, getOpenOrders, getOrders, getPostiion, getUserBalance, initializeOrderbook, onrampUser, withdrawUser } from "../controllers/exchange.controllers";
+import { createOrder, deleteOrder, getAllPositions, getCandles, getDepth, getFills, getOpenOrders, getOrders, getPostiion, getRecentTrades, getUserBalance, initializeOrderbook, onrampUser, withdrawUser } from "../controllers/exchange.controllers";
 
 export const exchangeRouter = Router();
 
@@ -18,3 +18,4 @@ exchangeRouter.get("/orders/open/:marketId", requireAuth, asyncHandler(getOpenOr
 exchangeRouter.get("/fills", requireAuth, asyncHandler(getFills));
 exchangeRouter.get("/depth/:marketId", asyncHandler(getDepth));
 exchangeRouter.get("/candles/:marketId", asyncHandler(getCandles));
+exchangeRouter.get("/trades/:marketId", asyncHandler(getRecentTrades));
