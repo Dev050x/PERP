@@ -44,10 +44,15 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
     }
 
     res.status(200).json({
-        msg: "Order Placed succefully",
-        userId: response.data.userId,
-        order: response.data.order,
-        position: response.data.position
+        success: true,
+        msg: "Order placed successfully",
+        data: {
+            order: response.data.order,
+            fills: response.data.fills ?? null,
+            position: Object.keys(response.data.position ?? {}).length > 0 
+                ? response.data.position 
+                : null
+        }
     });
 
 }
