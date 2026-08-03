@@ -4,7 +4,6 @@ import { resolvePromise } from "./pending-response";
 
 export async function listeningForEngineResponse(): Promise<void> {
     while (1) {
-        console.log("checking for a response");
         const item = await RedisManager.getInstance().readMessage();
         const raw_data = item?.[0]?.messages[0]?.message["message"];
         if(!raw_data) continue;

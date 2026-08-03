@@ -1,11 +1,13 @@
 import express, { type NextFunction, type Request, type Response } from "express";
 import { env } from "./utils/env";
+import cors from "cors";
 import { authRouter } from "./routes/auth.routes";
 import { exchangeRouter } from "./routes/exchange.routes";
 import { listeningForEngineResponse } from "./utils/engine-client";
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
 void listeningForEngineResponse();
 

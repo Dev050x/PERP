@@ -16,7 +16,9 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@types/cors": "^2.8.19",
     "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
     "crypto": "^1.0.1",
     "db": "workspace:*",
     "dotenv": "^17.4.2",
