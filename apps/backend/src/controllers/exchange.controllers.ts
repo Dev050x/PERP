@@ -184,6 +184,19 @@ export const getUserBalance = async (req: Request, res: Response, next: NextFunc
     const response = await waitForEngineResponse(correlationID, 5000);
 
     if (response.error) {
+        const errStr = typeof response.error === "string" ? response.error : "";
+        if (errStr.includes("user does not deposit") || errStr.includes("deposit any asset")) {
+            res.status(200).json({
+                success: true,
+                data: {
+                    userBalance: {
+                        availableBalance: "0.00000000",
+                        lockedBalance: "0.00000000"
+                    }
+                }
+            });
+            return;
+        }
         res.status(400).json({
             success: false,
             error: response.error ? response.error : "some user error",
@@ -247,6 +260,15 @@ export const getPostiion = async (req: Request, res: Response) => {
     console.log("response: ", response);
 
     if (response.error) {
+        const errStr = typeof response.error === "string" ? response.error : "";
+        if (errStr.includes("user does not deposit") || errStr.includes("deposit any asset") || errStr.includes("User does not have any positions")) {
+            res.status(200).json({
+                success: true,
+                msg: "here is the position",
+                data: { position: null }
+            });
+            return;
+        }
         res.status(400).json({
             success: false,
             error: response.error ? response.error : "some user error",
@@ -276,6 +298,15 @@ export const getAllPositions = async (req: Request, res: Response): Promise<void
     const response = await waitForEngineResponse(correlationID, 5000);
 
     if (response.error) {
+        const errStr = typeof response.error === "string" ? response.error : "";
+        if (errStr.includes("user does not deposit") || errStr.includes("deposit any asset") || errStr.includes("User does not have any positions")) {
+            res.status(200).json({
+                success: true,
+                msg: "here are all positions",
+                data: []
+            });
+            return;
+        }
         res.status(400).json({
             success: false,
             error: response.error ? response.error : "some user error",
@@ -377,6 +408,18 @@ export const getFills = async (req: Request, res: Response) => {
     const response = await waitForEngineResponse(correlationID, 5000);
 
     if (response.error) {
+        const errStr = typeof response.error === "string" ? response.error : "";
+        if (
+            errStr.includes("user does not deposit") ||
+            errStr.includes("deposit any asset") ||
+            errStr.toLowerCase().includes("fills does not exist")
+        ) {
+            res.status(200).json({
+                success: true,
+                data: []
+            });
+            return;
+        }
         res.status(400).json({
             success: false,
             error: response.error ? response.error : "some user error",
