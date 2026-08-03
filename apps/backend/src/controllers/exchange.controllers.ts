@@ -7,6 +7,8 @@ import { createOrderSchema, deleteOrderSchema, getCandlesSchema, getDepthSchema,
 import { sendValidationError } from "../utils/validation";
 import { aggregateCandles } from "../utils/candle-aggregator";
 
+const ENGINE_TIMEOUT_MS = parseInt(process.env.ENGINE_TIMEOUT_MS || "10000", 10);
+
 export const createOrder = async (req: Request, res: Response, next: NextFunction) => {
     const userId = getUserId(req);
     const parsedBody = createOrderSchema.safeParse(req.body);
@@ -34,7 +36,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
         correlationID
     });
 
-    const response = await waitForEngineResponse(correlationID, 5000);
+    const response = await waitForEngineResponse(correlationID, ENGINE_TIMEOUT_MS);
     console.log("response", response.error);
 
     if (response.error) {
@@ -79,7 +81,7 @@ export const deleteOrder = async (req: Request, res: Response) => {
         correlationID
     });
 
-    const response = await waitForEngineResponse(correlationID, 5000);
+    const response = await waitForEngineResponse(correlationID, ENGINE_TIMEOUT_MS);
 
     if (response.error) {
         res.status(400).json({
@@ -119,7 +121,7 @@ export const onrampUser = async (req: Request, res: Response, next: NextFunction
         correlationID,
     });
 
-    const response = await waitForEngineResponse(correlationID, 5000);
+    const response = await waitForEngineResponse(correlationID, ENGINE_TIMEOUT_MS);
     const data = response.data;
 
     res.status(200).json({
@@ -151,7 +153,7 @@ export const withdrawUser = async (req: Request, res: Response, next: NextFuncti
         correlationID,
     });
 
-    const response = await waitForEngineResponse(correlationID, 5000);
+    const response = await waitForEngineResponse(correlationID, ENGINE_TIMEOUT_MS);
 
     if (response.error) {
         res.status(400).json({
@@ -181,7 +183,7 @@ export const getUserBalance = async (req: Request, res: Response, next: NextFunc
         correlationID,
     });
 
-    const response = await waitForEngineResponse(correlationID, 5000);
+    const response = await waitForEngineResponse(correlationID, ENGINE_TIMEOUT_MS);
 
     if (response.error) {
         const errStr = typeof response.error === "string" ? response.error : "";
@@ -225,7 +227,7 @@ export const initializeOrderbook = async (req: Request, res: Response, next: Nex
         correlationID,
     });
 
-    const response = await waitForEngineResponse(correlationID, 5000);
+    const response = await waitForEngineResponse(correlationID, ENGINE_TIMEOUT_MS);
     console.log("response: ", response);
     const data = response.data;
 
@@ -256,7 +258,7 @@ export const getPostiion = async (req: Request, res: Response) => {
         correlationID
     });
 
-    const response = await waitForEngineResponse(correlationID, 5000);
+    const response = await waitForEngineResponse(correlationID, ENGINE_TIMEOUT_MS);
     console.log("response: ", response);
 
     if (response.error) {
@@ -295,7 +297,7 @@ export const getAllPositions = async (req: Request, res: Response): Promise<void
         correlationID,
     });
 
-    const response = await waitForEngineResponse(correlationID, 5000);
+    const response = await waitForEngineResponse(correlationID, ENGINE_TIMEOUT_MS);
 
     if (response.error) {
         const errStr = typeof response.error === "string" ? response.error : "";
@@ -405,7 +407,7 @@ export const getFills = async (req: Request, res: Response) => {
         correlationID
     });
 
-    const response = await waitForEngineResponse(correlationID, 5000);
+    const response = await waitForEngineResponse(correlationID, ENGINE_TIMEOUT_MS);
 
     if (response.error) {
         const errStr = typeof response.error === "string" ? response.error : "";
@@ -450,7 +452,7 @@ export const getDepth = async (req: Request, res: Response) => {
         correlationID,
     });
 
-    const response = await waitForEngineResponse(correlationID, 5000);
+    const response = await waitForEngineResponse(correlationID, ENGINE_TIMEOUT_MS);
 
     if (response.error) {
         res.status(400).json({
@@ -547,6 +549,7 @@ export const getRecentTrades = async (req: Request, res: Response) => {
             quantity: f.quantity,
             makerId: f.makerId,
             takerId: f.takerId,
+            isBuyerMaker: f.makerId === f.longUserId || f.makerId === f.longOrderId,
             timestamp: Math.floor(new Date(f.createdAt).getTime() / 1000),
             createdAt: f.createdAt,
         }));
