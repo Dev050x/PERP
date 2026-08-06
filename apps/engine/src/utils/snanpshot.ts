@@ -7,7 +7,7 @@ import { UserManager } from "../store/user-manager";
 import { LiquidationManager } from "../store/liquidation-manager";
 import { RedisManager } from "../store/redis-manager";
 
-const SNAPSHOT_INTERVAL = 60_000;
+const SNAPSHOT_INTERVAL = 24*60* 60_000;
 const SNAPSHOT_DIR = path.join(process.cwd(), "src/snapshots");
 
 function replacer(_key: string, value: any) {

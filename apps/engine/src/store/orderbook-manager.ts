@@ -296,8 +296,8 @@ export class OrderBookManager {
         const fill = {
           makerId: order.userId,
           takerId: data.userId,
-          LongUserId: data.userId,
-          ShortUserId: order.userId,
+          LongUserId: order.userId,
+          ShortUserId: data.userId,
           price: p,
           qty: filledQty,
           market: data.market,
