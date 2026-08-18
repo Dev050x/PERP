@@ -1,159 +1,216 @@
-# Turborepo starter
+# PERP — High-Performance Perpetual Futures Exchange Engine
 
-This Turborepo starter is maintained by the Turborepo core team.
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg?logo=typescript)](https://www.typescriptlang.org/)
+[![Turborepo](https://img.shields.io/badge/Turborepo-Monorepo-ef4444.svg?logo=turborepo)](https://turbo.build/)
+[![Bun](https://img.shields.io/badge/Bun-1.3-black.svg?logo=bun)](https://bun.sh/)
+[![Redis](https://img.shields.io/badge/Redis-Streams-red.svg?logo=redis)](https://redis.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Prisma%20ORM-336791.svg?logo=postgresql)](https://www.postgresql.org/)
+[![Frontend UI](https://img.shields.io/badge/Frontend-PERP--UI-10b981.svg?logo=github)](https://github.com/Dev050x/PERP-UI)
 
-## Using this example
+**PERP** is an event-driven, high-frequency **Perpetual Derivatives & Futures Trading Engine** built with TypeScript, Node.js/Bun, Redis Streams, and PostgreSQL. It provides the core backend architecture and real-time order matching engine for the [PERP-UI](https://github.com/Dev050x/PERP-UI) frontend application.
 
-Run the following command:
+---
 
-```sh
-npx create-turbo@latest
+## Key Features
+
+- **In-Memory Matching Engine**: Orderbook architecture utilizing **B-Trees** (`sorted-btree`) for fast sorted price lookup and **Doubly-Linked Lists** (`LinkedList`) for FIFO queueing of user resting orders at each price level.
+- **Event-Driven Microservices**: Decoupled REST Gateway, Matching Engine, WebSocket Server, DB Poller, and Price Feed connected asynchronously via **Redis Streams**.
+- **Risk & Liquidation Engine**: Dynamic margin checks, leverage validation, mark price calculation, dynamic funding rate engine, and automated liquidation of undercollateralized positions.
+- **Fault-Tolerant State Recovery**: Engine state snapshots paired with offset-tracked Redis Stream replay for zero-loss recovery after system restart/crash.
+- **Decoupled Asynchronous Persistence**: Background **DB-Poller** worker consumes events from Redis Streams and batch persists orders, fills, trades, and candlestick data to **PostgreSQL** via **Prisma ORM** without blocking matching engine execution.
+- **Real-Time WebSocket Streaming**: Instant orderbook depth and price ticker updates pushed to connected clients via WebSocket server (`ws://localhost:3001`).
+- **Automated Market Maker (AMM) Bot**: Included CLI simulator (`market-maker.js`) that auto-registers traders, funds test balances, and populates live market depth & trading activity.
+
+---
+
+## Repository Structure
+
+Monorepo architecture powered by **Turborepo** & **Bun**:
+
+```
+PERP/
+├── apps/
+│   ├── backend/             # Express.js REST API Gateway (Auth, Orders, Balance)
+│   ├── engine/              # In-memory Matching Engine & Risk Management
+│   ├── db-poller/           # Background worker batch persisting events to PostgreSQL
+│   ├── web-socket-server/   # Real-time WebSocket broadcasting server
+│   ├── price-feed/          # Oracle mark price stream connector (Binance Stream)
+│   └── test/                # Integration tests & load benchmark suites
+├── packages/
+│   ├── db/                  # Prisma ORM schema & client definitions
+│   ├── types/               # Shared TypeScript interfaces, types & Zod schemas
+│   └── eslint-config/       # Shared ESLint configuration
+├── market-maker.js          # Automated Market Maker & liquidity simulator
+├── package.json             # Monorepo configuration
+├── turbo.json               # Turborepo task pipeline
+└── bun.lock                 # Bun lockfile
 ```
 
-## What's inside?
+---
 
-This Turborepo includes the following packages/apps:
+## Technology Stack & Web Client
 
-### Apps and Packages
+| Domain | Technologies / Repositories |
+| :--- | :--- |
+| **Frontend Web App** | [PERP-UI Repository](https://github.com/Dev050x/PERP-UI) |
+| **Language & Runtime** | TypeScript, Bun / Node.js |
+| **Monorepo Tooling** | Turborepo, Bun Workspaces |
+| **Matching Engine** | In-Memory Orderbook (B-Tree for price levels, Doubly-Linked List for resting orders) |
+| **Messaging & Queues** | Redis Streams |
+| **API Gateway** | Express.js, JWT, Zod Validation, CORS |
+| **Database & ORM** | PostgreSQL, Prisma ORM |
+| **Real-time Comms** | WebSockets (`ws`), Binance Oracle Stream |
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+---
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+## Getting Started
 
-### Utilities
+### Prerequisites
 
-This Turborepo has some additional tools already setup for you:
+Ensure you have the following installed on your machine:
+- **Node.js** (v18+) or **Bun** (v1.3+)
+- **Redis Server** running locally on default port `6379`
+- **PostgreSQL Database** running on port `5432`
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+### 1. Installation
 
-### Build
+Clone the repository and install workspace dependencies:
 
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+```bash
+git clone https://github.com/Dev050x/PERP.git
+cd PERP
+bun install
+# or
+npm install
 ```
 
-Without global `turbo`, use your package manager:
+### 2. Environment Setup
 
-```sh
-cd my-turborepo
-npx turbo build
-bun dlx turbo build
-bun exec turbo build
+Create `.env` files for the respective microservices:
+
+#### Database Package (`packages/db/.env`)
+```env
+DATABASE_URL="postgresql://postgres:password@localhost:5432/perp_db?schema=public"
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
+#### Backend API (`apps/backend/.env`)
+```env
+PORT=8080
+JWT_SECRET=your_jwt_secret_key_here
+REDIS_URL=redis://localhost:6379
 ```
 
-Without global `turbo`:
-
-```sh
-npx turbo build --filter=docs
-bun exec turbo build --filter=docs
-bun exec turbo build --filter=docs
+#### Engine & DB Poller (`apps/engine/.env`, `apps/db-poller/.env`)
+```env
+REDIS_URL=redis://localhost:6379
 ```
 
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
+#### Price Feed (`apps/price-feed/.env`)
+```env
+STREAM_URL=wss://fstream.binance.com/ws/solusdt@markPrice@1s
 ```
 
-Without global `turbo`, use your package manager:
+### 3. Database Migration
 
-```sh
-cd my-turborepo
-npx turbo dev
-bun exec turbo dev
-bun exec turbo dev
+Initialize the PostgreSQL database schema with Prisma:
+
+```bash
+cd packages/db
+npx prisma db push
+# Generate Prisma Client
+npx prisma generate
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+### 4. Running the Development Services
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+Run all services concurrently using Turborepo:
 
-```sh
-turbo dev --filter=web
+```bash
+bun dev
+# or
+npm run dev
 ```
 
-Without global `turbo`:
+Alternatively, you can run individual services:
 
-```sh
-npx turbo dev --filter=web
-bun exec turbo dev --filter=web
-bun exec turbo dev --filter=web
+```bash
+# Start Engine
+bun dev --filter=engine
+
+# Start REST Backend Gateway
+bun dev --filter=backend
+
+# Start Database Poller
+bun dev --filter=db-poller
+
+# Start WebSocket Server
+bun dev --filter=web-socket-server
 ```
 
-### Remote Caching
+---
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+## API Reference
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+### Authentication
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/v1/sign-up` | Register a new trader account |
+| `POST` | `/api/v1/sign-in` | Authenticate trader and receive JWT |
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+### Account & Balance
 
-```sh
-cd my-turborepo
-turbo login
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/onramp` | Yes | Deposit test balance (e.g. USDC) |
+| `POST` | `/api/v1/withdraw` | Yes | Withdraw collateral balance |
+| `GET` | `/api/v1/balance` | Yes | Get current user token & locked balances |
+
+### Trading & Orders
+
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/order` | Yes | Submit new `LONG` or `SHORT` order (limit/market) |
+| `DELETE`| `/api/v1/order` | Yes | Cancel an open limit order |
+| `GET` | `/api/v1/orders/:marketId` | Yes | Fetch user orders for a market |
+| `GET` | `/api/v1/orders/open/:marketId` | Yes | Fetch open user orders |
+| `GET` | `/api/v1/position/open` | Yes | Get all open leveraged positions |
+| `GET` | `/api/v1/position/open/:marketId` | Yes | Get position for specific market |
+| `GET` | `/api/v1/fills` | Yes | Get user trade execution fills |
+
+### Market Data (Public)
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/depth/:marketId` | Retrieve live orderbook depth (bids & asks) |
+| `GET` | `/api/v1/trades/:marketId` | Retrieve recent executed market trades |
+| `GET` | `/api/v1/candles/:marketId` | Retrieve OHLC candlestick data |
+
+---
+
+## Automated Market Maker (AMM) Simulator
+
+A built-in market maker script is included to simulate market activity and test execution engine performance under live quote pressure.
+
+To run the market maker:
+
+```bash
+node market-maker.js
 ```
 
-Without global `turbo`, use your package manager:
+**What it does:**
+- Automatically registers two test market maker accounts (`mm_trader_1` and `mm_trader_2`).
+- Funds accounts with $100,000 USDC test balance via `/onramp`.
+- Continuously posts active two-sided limit quotes (bids/asks) and aggressive taker orders across `SOL` and `ETH` markets.
 
-```sh
-cd my-turborepo
-npx turbo login
-bun exec turbo login
-bun exec turbo login
-```
+---
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+## Related Repositories
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+- **Frontend Web UI**: [https://github.com/Dev050x/PERP-UI](https://github.com/Dev050x/PERP-UI)
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+---
 
-```sh
-turbo link
-```
+## License
 
-Without global `turbo`:
-
-```sh
-npx turbo link
-bun exec turbo link
-bun exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+This project is licensed under the MIT License.
