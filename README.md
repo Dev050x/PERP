@@ -1,216 +1,209 @@
-# PERP — High-Performance Perpetual Futures Exchange Engine
+<h1 align="center">PERP ⚡</h1>
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg?logo=typescript)](https://www.typescriptlang.org/)
-[![Turborepo](https://img.shields.io/badge/Turborepo-Monorepo-ef4444.svg?logo=turborepo)](https://turbo.build/)
-[![Bun](https://img.shields.io/badge/Bun-1.3-black.svg?logo=bun)](https://bun.sh/)
-[![Redis](https://img.shields.io/badge/Redis-Streams-red.svg?logo=redis)](https://redis.io/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Prisma%20ORM-336791.svg?logo=postgresql)](https://www.postgresql.org/)
-[![Frontend UI](https://img.shields.io/badge/Frontend-PERP--UI-10b981.svg?logo=github)](https://github.com/Dev050x/PERP-UI)
+<p align="center">
+    A high-performance perpetual futures trading engine built with TypeScript, Bun, Redis Streams, and PostgreSQL.
+    <br /> <br />
+    <a href="#introduction"><strong>Introduction</strong></a> ·
+    <a href="#architecture"><strong>Architecture</strong></a> ·
+    <a href="#user-interface"><strong>User Interface</strong></a> ·
+    <a href="#features"><strong>Features</strong></a> ·
+    <a href="#tech-stack"><strong>Tech Stack</strong></a> ·
+    <a href="#api-endpoints"><strong>API Endpoints</strong></a> ·
+    <a href="#order-matching--execution"><strong>Order Matching & Execution</strong></a> ·
+    <a href="#automated-market-maker-amm-simulator"><strong>AMM Simulator</strong></a> ·
+    <a href="#local-development"><strong>Local Development</strong></a> ·
+    <a href="#license"><strong>License</strong></a>
+</p>
+<p align="center">
+  <a href="https://x.com/Div5533">
+    <img src="https://img.shields.io/twitter/follow/Div5533?style=flat&label=%40Div5533&logo=twitter&color=0bf&logoColor=000" alt="Twitter" />
+  </a>
+</p>
 
-**PERP** is an event-driven, high-frequency **Perpetual Derivatives & Futures Trading Engine** built with TypeScript, Node.js/Bun, Redis Streams, and PostgreSQL. It provides the core backend architecture and real-time order matching engine for the [PERP-UI](https://github.com/Dev050x/PERP-UI) frontend application.
+## Introduction
 
----
+PERP is a low-latency, event-driven perpetual futures trading engine designed for high-frequency derivatives trading. Built with TypeScript and Bun in a monorepo architecture, it features an in-memory order book utilizing B-Trees and Doubly-Linked Lists, real-time WebSocket streaming, dynamic risk management (leverage validation, mark price calculation, dynamic funding rates, auto-liquidation), and an asynchronous persistence layer powered by Redis Streams and PostgreSQL.
 
-## Key Features
+## Architecture
 
-- **In-Memory Matching Engine**: Orderbook architecture utilizing **B-Trees** (`sorted-btree`) for fast sorted price lookup and **Doubly-Linked Lists** (`LinkedList`) for FIFO queueing of user resting orders at each price level.
-- **Event-Driven Microservices**: Decoupled REST Gateway, Matching Engine, WebSocket Server, DB Poller, and Price Feed connected asynchronously via **Redis Streams**.
-- **Risk & Liquidation Engine**: Dynamic margin checks, leverage validation, mark price calculation, dynamic funding rate engine, and automated liquidation of undercollateralized positions.
-- **Fault-Tolerant State Recovery**: Engine state snapshots paired with offset-tracked Redis Stream replay for zero-loss recovery after system restart/crash.
-- **Decoupled Asynchronous Persistence**: Background **DB-Poller** worker consumes events from Redis Streams and batch persists orders, fills, trades, and candlestick data to **PostgreSQL** via **Prisma ORM** without blocking matching engine execution.
-- **Real-Time WebSocket Streaming**: Instant orderbook depth and price ticker updates pushed to connected clients via WebSocket server (`ws://localhost:3001`).
-- **Automated Market Maker (AMM) Bot**: Included CLI simulator (`market-maker.js`) that auto-registers traders, funds test balances, and populates live market depth & trading activity.
+![Exchange Architecture](assets/architecture.png)
 
----
+## User Interface
 
-## Repository Structure
+- GitHub Repository - [PERP-UI](https://github.com/Dev050x/PERP-UI)
 
-Monorepo architecture powered by **Turborepo** & **Bun**:
+![User Interface](assets/user-interface.png)
 
-```
-PERP/
-├── apps/
-│   ├── backend/             # Express.js REST API Gateway (Auth, Orders, Balance)
-│   ├── engine/              # In-memory Matching Engine & Risk Management
-│   ├── db-poller/           # Background worker batch persisting events to PostgreSQL
-│   ├── web-socket-server/   # Real-time WebSocket broadcasting server
-│   ├── price-feed/          # Oracle mark price stream connector (Binance Stream)
-│   └── test/                # Integration tests & load benchmark suites
-├── packages/
-│   ├── db/                  # Prisma ORM schema & client definitions
-│   ├── types/               # Shared TypeScript interfaces, types & Zod schemas
-│   └── eslint-config/       # Shared ESLint configuration
-├── market-maker.js          # Automated Market Maker & liquidity simulator
-├── package.json             # Monorepo configuration
-├── turbo.json               # Turborepo task pipeline
-└── bun.lock                 # Bun lockfile
-```
+## Features
 
----
+- ⚡ **Ultra-fast Order Matching** - In-memory matching engine for sub-millisecond execution.
+- 🏦 **In-memory Order Book & Balances** - B-Trees for sorted price-level tracking and Doubly-Linked Lists for FIFO resting order execution.
+- 🔥 **Real-time WebSockets** - Instant broadcasts for orderbook depth, trade execution fills, and tickers.
+- 🛡️ **Risk & Liquidation Engine** - Dynamic margin checks, mark price tracking, leverage validation, funding rate calculations, and automated liquidations.
+- 🔄 **Fault-tolerant Architecture** - Redis Streams message broker with offset replay for zero-loss crash recovery.
+- 📦 **Decoupled Persistence** - Asynchronous background DB Poller worker batch persisting orders, fills, trades, and candles to PostgreSQL without blocking engine performance.
+- 🔌 **Efficient API Layer** - Express.js REST API Gateway with JWT authentication, Zod validation, and direct read paths for historical queries.
 
-## Technology Stack & Web Client
+## Tech Stack
 
-| Domain | Technologies / Repositories |
-| :--- | :--- |
-| **Frontend Web App** | [PERP-UI Repository](https://github.com/Dev050x/PERP-UI) |
-| **Language & Runtime** | TypeScript, Bun / Node.js |
-| **Monorepo Tooling** | Turborepo, Bun Workspaces |
-| **Matching Engine** | In-Memory Orderbook (B-Tree for price levels, Doubly-Linked List for resting orders) |
-| **Messaging & Queues** | Redis Streams |
-| **API Gateway** | Express.js, JWT, Zod Validation, CORS |
-| **Database & ORM** | PostgreSQL, Prisma ORM |
-| **Real-time Comms** | WebSockets (`ws`), Binance Oracle Stream |
+- [TypeScript](https://www.typescriptlang.org/) - Core language for type safety and execution performance.
+- [Bun](https://bun.sh/) - Fast JavaScript/TypeScript runtime and package manager.
+- [Turborepo](https://turbo.build/) - High-performance build system for monorepos.
+- [Redis Streams](https://redis.io/) - Message queue and pub/sub event bus.
+- [PostgreSQL](https://www.postgresql.org/) - Persistent storage for trade history, orders, candles, and balances.
+- [Prisma ORM](https://www.prisma.io/) - Database interaction and client generation.
+- [Express.js](https://expressjs.com/) - Web framework for REST API endpoints.
+- [WebSockets](https://github.com/websockets/ws) - Real-time market data streaming.
+- [Zod](https://zod.dev/) - Schema validation.
 
----
+### Components
 
-## Getting Started
+1. **Primary REST API Gateway (`apps/backend`)**
 
-### Prerequisites
+   - Handles REST API requests (Auth, Orders, Balance, Positions).
+   - Routes write/execution requests to Redis Streams with unique correlation IDs and awaits responses.
+   - Queries PostgreSQL directly for historical queries (candles, trades, orders) to unburden matching engine CPU.
 
-Ensure you have the following installed on your machine:
-- **Node.js** (v18+) or **Bun** (v1.3+)
-- **Redis Server** running locally on default port `6379`
-- **PostgreSQL Database** running on port `5432`
+2. **Redis Streams Message Bus**
 
-### 1. Installation
+   - `REQUEST_STREAM`: Message queue for inbound order creations, cancellations, deposits, and withdrawals.
+   - `MARK_PRICE_STREAM`: Oracle price updates from external feeds.
+   - `RESPONSE_STREAM`: Event stream for matching engine outputs, trade fills, liquidations, and depth updates.
 
-Clone the repository and install workspace dependencies:
+3. **Matching & Risk Engine (`apps/engine`)**
 
-```bash
-git clone https://github.com/Dev050x/PERP.git
-cd PERP
-bun install
-# or
-npm install
-```
+   - Maintains in-memory order books and user balances.
+   - Executes trades using price-time priority.
+   - Manages position leverage, mark price recalculations, and auto-liquidations.
 
-### 2. Environment Setup
+4. **WebSocket Layer (`apps/web-socket-server`)**
 
-Create `.env` files for the respective microservices:
+   - Consumes market events from Redis Streams.
+   - Streams live orderbook depth (`depth.<market>`), market trades (`trade.<market>`), and tickers to clients in real time.
 
-#### Database Package (`packages/db/.env`)
-```env
-DATABASE_URL="postgresql://postgres:password@localhost:5432/perp_db?schema=public"
-```
+5. **Database Poller (`apps/db-poller`)**
 
-#### Backend API (`apps/backend/.env`)
-```env
-PORT=8080
-JWT_SECRET=your_jwt_secret_key_here
-REDIS_URL=redis://localhost:6379
-```
+   - Background worker consuming execution events from Redis Streams.
+   - Batch inserts and updates orders, fills, positions, and candlestick data into PostgreSQL asynchronously.
 
-#### Engine & DB Poller (`apps/engine/.env`, `apps/db-poller/.env`)
-```env
-REDIS_URL=redis://localhost:6379
-```
+6. **Price Feed Oracle (`apps/price-feed`)**
 
-#### Price Feed (`apps/price-feed/.env`)
-```env
-STREAM_URL=wss://fstream.binance.com/ws/solusdt@markPrice@1s
-```
+   - Connects to external price sockets (e.g. Binance) and streams live mark prices into Redis Streams.
 
-### 3. Database Migration
-
-Initialize the PostgreSQL database schema with Prisma:
-
-```bash
-cd packages/db
-npx prisma db push
-# Generate Prisma Client
-npx prisma generate
-```
-
-### 4. Running the Development Services
-
-Run all services concurrently using Turborepo:
-
-```bash
-bun dev
-# or
-npm run dev
-```
-
-Alternatively, you can run individual services:
-
-```bash
-# Start Engine
-bun dev --filter=engine
-
-# Start REST Backend Gateway
-bun dev --filter=backend
-
-# Start Database Poller
-bun dev --filter=db-poller
-
-# Start WebSocket Server
-bun dev --filter=web-socket-server
-```
-
----
-
-## API Reference
+## API Endpoints
 
 ### Authentication
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/api/v1/sign-up` | Register a new trader account |
-| `POST` | `/api/v1/sign-in` | Authenticate trader and receive JWT |
+- `POST /api/v1/sign-up` -> Register a new trader account
+- `POST /api/v1/sign-in` -> Authenticate trader and receive JWT token
 
 ### Account & Balance
 
-| Method | Endpoint | Auth | Description |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/v1/onramp` | Yes | Deposit test balance (e.g. USDC) |
-| `POST` | `/api/v1/withdraw` | Yes | Withdraw collateral balance |
-| `GET` | `/api/v1/balance` | Yes | Get current user token & locked balances |
+- `POST /api/v1/onramp` -> Deposit collateral balance (e.g., USDC)
+- `POST /api/v1/withdraw` -> Withdraw collateral balance
+- `GET /api/v1/balance` -> Get user available and locked balances
 
-### Trading & Orders
+### Order & Position Management
 
-| Method | Endpoint | Auth | Description |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/v1/order` | Yes | Submit new `LONG` or `SHORT` order (limit/market) |
-| `DELETE`| `/api/v1/order` | Yes | Cancel an open limit order |
-| `GET` | `/api/v1/orders/:marketId` | Yes | Fetch user orders for a market |
-| `GET` | `/api/v1/orders/open/:marketId` | Yes | Fetch open user orders |
-| `GET` | `/api/v1/position/open` | Yes | Get all open leveraged positions |
-| `GET` | `/api/v1/position/open/:marketId` | Yes | Get position for specific market |
-| `GET` | `/api/v1/fills` | Yes | Get user trade execution fills |
+- `POST /api/v1/order` -> Create/Execute a new LONG or SHORT order (limit/market)
+- `DELETE /api/v1/order` -> Cancel an active limit order
+- `GET /api/v1/orders/:marketId` -> Get user historical orders for a market
+- `GET /api/v1/orders/open/:marketId` -> Get open user orders for a market
+- `GET /api/v1/position/open` -> Get all open leveraged positions
+- `GET /api/v1/position/open/:marketId` -> Get open position for a specific market
+- `GET /api/v1/fills` -> Get trade execution fills
 
-### Market Data (Public)
+### Market Data
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/v1/depth/:marketId` | Retrieve live orderbook depth (bids & asks) |
-| `GET` | `/api/v1/trades/:marketId` | Retrieve recent executed market trades |
-| `GET` | `/api/v1/candles/:marketId` | Retrieve OHLC candlestick data |
+- `GET /api/v1/depth/:marketId` -> Get live orderbook depth (bids & asks)
+- `GET /api/v1/trades/:marketId` -> Get recent executed market trades
+- `GET /api/v1/candles/:marketId` -> Get historical OHLC candlestick data
 
----
+## Order Matching & Execution
+
+#### Data Structures
+
+```typescript
+// Core Engine Structure
+interface Engine {
+  orderbooks: Map<string, Orderbook>;
+  balances: Map<string, UserBalance>;
+  positions: Map<string, Map<string, Position>>;
+}
+
+// In-Memory Orderbook (B-Tree + Doubly Linked List)
+interface Orderbook {
+  bids: BTree<number, LinkedList<Order>>; // Sorted descending by price
+  asks: BTree<number, LinkedList<Order>>; // Sorted ascending by price
+  market: string;
+}
+
+// Order Definition
+interface Order {
+  orderId: string;
+  userId: string;
+  market: string;
+  side: "LONG" | "SHORT";
+  type: "limit" | "market";
+  price: number;
+  qty: number;
+  filledQty: number;
+  margin: number;
+  status: "open" | "partiallyFilled" | "Filled" | "Close" | "Cancel";
+  timestamp: number;
+}
+
+// User Balances & Position State
+interface UserBalance {
+  userId: string;
+  availableBalance: number;
+  lockedBalance: number;
+}
+
+interface Position {
+  positionId: string;
+  userId: string;
+  market: string;
+  side: "LONG" | "SHORT";
+  qty: number;
+  entryPrice: number;
+  margin: number;
+  leverage: number;
+  liquidationPrice: number;
+}
+```
+
+#### Order Execution Flow
+
+- Orders are processed asynchronously using Bun runtime and Redis Streams.
+- API Gateway pushes requests (`CreateOrder`, `CancelOrder`) to `REQUEST_STREAM`.
+- The engine pops new requests from Redis Streams and evaluates the in-memory order book.
+- If a match is found, trade execution occurs using price-time priority.
+- Trade fills, market updates, and user positions are published to `RESPONSE_STREAM`.
+- WebSocket server streams updates to clients while DB Poller batch persists state to PostgreSQL.
 
 ## Automated Market Maker (AMM) Simulator
 
-A built-in market maker script is included to simulate market activity and test execution engine performance under live quote pressure.
-
-To run the market maker:
+A built-in market maker script is included to simulate two-sided quoting and liquidity pressure:
 
 ```bash
 node market-maker.js
 ```
 
-**What it does:**
-- Automatically registers two test market maker accounts (`mm_trader_1` and `mm_trader_2`).
-- Funds accounts with $100,000 USDC test balance via `/onramp`.
-- Continuously posts active two-sided limit quotes (bids/asks) and aggressive taker orders across `SOL` and `ETH` markets.
+What it does:
+- Registers market maker test accounts (`mm_trader_1` and `mm_trader_2`).
+- Funds accounts with test USDC balance via `/onramp`.
+- Continuously posts active two-sided limit orders across `SOL` and `ETH` markets.
 
----
+## Local Development
 
-## Related Repositories
-
-- **Frontend Web UI**: [https://github.com/Dev050x/PERP-UI](https://github.com/Dev050x/PERP-UI)
-
----
+```bash
+git clone https://github.com/Dev050x/PERP.git
+cd PERP
+bun install
+bun dev
+```
 
 ## License
 
-This project is licensed under the MIT License.
+PERP is open-source under the [MIT License](LICENSE).
