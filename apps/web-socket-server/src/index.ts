@@ -3,7 +3,7 @@ import { RedisManager } from "./redis-manager";
 import type { EngineResponse } from "types/receiver";
 
 const ws = new WebSocketServer({
-    port: 3001
+    port: Number(process.env.WS_PORT ?? 3001)
 });
 
 interface Users {

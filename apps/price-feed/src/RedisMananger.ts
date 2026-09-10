@@ -6,7 +6,7 @@ export class RedisManager{
     private publisher: RedisClientType;
 
     private constructor() {
-        this.publisher = createClient();
+        this.publisher = createClient({ url: process.env.REDIS_URL });
         this.publisher.connect();
     }
 

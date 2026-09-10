@@ -37,7 +37,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
     });
 
     const response = await waitForEngineResponse(correlationID, ENGINE_TIMEOUT_MS);
-    console.log("response", response.error);
+    console.log("response", response);
 
     if (response.error) {
         res.status(400).json({

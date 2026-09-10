@@ -8,9 +8,9 @@ export class RedisManager {
     private lastOffset: string;
 
     private constructor() {
-        this.publisher = createClient();
+        this.publisher = createClient({ url: process.env.REDIS_URL });
         this.publisher.connect();
-        this.receiver = createClient();
+        this.receiver = createClient({ url: process.env.REDIS_URL });
         this.receiver.connect();
         this.lastOffset = "";
     }
