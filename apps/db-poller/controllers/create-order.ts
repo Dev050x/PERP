@@ -44,13 +44,13 @@ export async function createOrder(data: CreateOrderResponseData) {
       });
 
       // Group fills by maker order ID to update maker orders in DB
-      const makerFillsMap = new Map<string, bigint>();
+      const makerFillsMap = new Map<string, number>();
       for (const fill of data.fills) {
         const makerOrderId =
           fill.makerId === fill.LongUserId ? fill.buyOrderId : fill.sellOrderId;
         if (makerOrderId) {
-          const prev = makerFillsMap.get(makerOrderId) || 0n;
-          makerFillsMap.set(makerOrderId, prev + BigInt(fill.qty));
+          const prev = makerFillsMap.get(makerOrderId) || 0;
+          makerFillsMap.set(makerOrderId, prev + parseFloat(fill.qty));
         }
       }
 
@@ -60,11 +60,11 @@ export async function createOrder(data: CreateOrderResponseData) {
         });
 
         if (makerOrder) {
-          const currentFilled = BigInt(makerOrder.filledQuantity || "0");
+          const currentFilled = parseFloat(makerOrder.filledQuantity || "0");
           const newFilled = currentFilled + fillQty;
-          const totalQty = BigInt(makerOrder.quantity);
+          const totalQty = parseFloat(makerOrder.quantity || "0");
           const newStatus: orderStatus =
-            newFilled >= totalQty ? "Filled" : "partiallyFilled";
+            newFilled >= totalQty - 0.000001 ? "Filled" : "partiallyFilled";
 
           await tx.orders.update({
             where: { id: makerOrderId },
