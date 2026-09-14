@@ -8,14 +8,14 @@ datasource db {
 }
 
 model User {
-  id         String     @id @default(uuid())
-  username   String     @unique
+  id         String   @id @default(uuid())
+  username   String   @unique
   password   String
-  longFills  Fills[]    @relation(name: "longUser")
-  shortFills Fills[]    @relation(name: "shortUser")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  longFills  Fills[]  @relation("longUser")
+  shortFills Fills[]  @relation("shortUser")
   orders     Orders[]
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
 }
 
 model Asset {
@@ -37,36 +37,35 @@ model Fills {
   price        String
   quantity     String
   market       String
-  longUser     User     @relation(name: "longUser", fields: [longUserId], references: [id])
-  shortUser    User     @relation(name: "shortUser", fields: [shortUserId], references: [id])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  longUser     User     @relation("longUser", fields: [longUserId], references: [id])
+  shortUser    User     @relation("shortUser", fields: [shortUserId], references: [id])
 }
 
 model Orders {
   id             String      @id @default(uuid())
   quantity       String
-  filledQuantity String      @default("0")
   price          String
   side           side
   type           type
-  status         orderStatus @default(open)
   userId         String
   market         String
-  user           User        @relation(fields: [userId], references: [id])
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
+  status         orderStatus @default(open)
+  filledQuantity String      @default("0")
+  user           User        @relation(fields: [userId], references: [id])
 }
 
 model Candle {
   market    String
-  timestamp DateTime
-
   open      String
   high      String
   low       String
   close     String
   volume    String
+  timestamp DateTime
 
   @@id([market, timestamp])
 }
