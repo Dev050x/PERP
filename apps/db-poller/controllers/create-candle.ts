@@ -38,17 +38,21 @@ async function resetCandles() {
             candleData.lowest = 0;
         }
 
-        await prisma.candle.create({
-            data: {
-                market: asset,
-                timestamp: candleData.timestamp,
-                open: candleData.open.toString(),
-                high: candleData.highest.toString(),
-                low: candleData.lowest.toString(),
-                close: candleData.close.toString(),
-                volume: candleData.volume.toString(),
-            },
-        });
+        try {
+            await prisma.candle.create({
+                data: {
+                    market: asset,
+                    timestamp: candleData.timestamp,
+                    open: candleData.open.toString(),
+                    high: candleData.highest.toString(),
+                    low: candleData.lowest.toString(),
+                    close: candleData.close.toString(),
+                    volume: candleData.volume.toString(),
+                },
+            });
+        } catch (err) {
+            console.error(`Failed to write candle for ${asset}:`, err);
+        }
     }
 }
 
