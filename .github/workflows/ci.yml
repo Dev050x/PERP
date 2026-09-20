@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install workspace
+        run: bun install --frozen-lockfile
+
+      # packages/db/index.ts imports the generated Prisma client, which is
+      # gitignored (packages/db/.gitignore) and must be regenerated here.
+      # prisma generate never opens a DB connection, so a placeholder URL is fine.
+      - name: Generate Prisma client
+        working-directory: packages/db
+        env:
+          DATABASE_URL: postgresql://placeholder:placeholder@127.0.0.1:5432/placeholder
+        run: bunx prisma generate
+
+      - name: Type check
+        run: bun run check-types
+
+      # apps/test imports engine internals directly and uses only bun:test +
+      # pure functions -- no Redis, no Postgres, no service containers needed.
+      - name: Unit + integration tests
+        working-directory: apps/test
+        run: bun test
