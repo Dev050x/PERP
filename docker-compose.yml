@@ -1,0 +1,122 @@
+name: perp
+
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - timescale-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    image: ghcr.io/${GHCR_OWNER}/perp-migrate:${IMAGE_TAG:-latest}
+    restart: "no"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+
+  engine:
+    image: ghcr.io/${GHCR_OWNER}/perp-engine:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      REDIS_URL: ${REDIS_URL}
+    volumes:
+      - engine-snapshots:/app/apps/engine/src/snapshots
+    depends_on:
+      redis:
+        condition: service_healthy
+    stop_grace_period: 30s
+    deploy:
+      replicas: 1
+
+  backend:
+    image: ghcr.io/${GHCR_OWNER}/perp-backend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      PORT: ${BACKEND_PORT}
+      JWT_SECRET: ${JWT_SECRET}
+      REDIS_URL: ${REDIS_URL}
+      DATABASE_URL: ${DATABASE_URL}
+      ENGINE_TIMEOUT_MS: ${ENGINE_TIMEOUT_MS}
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  web-socket-server:
+    image: ghcr.io/${GHCR_OWNER}/perp-web-socket-server:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      WS_PORT: ${WS_PORT}
+      REDIS_URL: ${REDIS_URL}
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    profiles: ["proxy"]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - backend
+      - web-socket-server
+
+  db-poller:
+    image: ghcr.io/${GHCR_OWNER}/perp-db-poller:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  price-feed:
+    image: ghcr.io/${GHCR_OWNER}/perp-price-feed:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      REDIS_URL: ${REDIS_URL}
+      STREAM_URL: ${STREAM_URL}
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  timescale-data:
+  redis-data:
+  engine-snapshots:
+  caddy-data:
+  caddy-config:

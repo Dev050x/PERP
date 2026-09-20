@@ -1,0 +1,56 @@
+# Local development / pre-AWS verification.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+# Builds every image locally instead of pulling from GHCR.
+
+services:
+  migrate:
+    image: perp-migrate:dev
+    build:
+      context: .
+      target: migrator
+
+  engine:
+    image: perp-engine:dev
+    build:
+      context: .
+      target: runtime
+      args:
+        APP: engine
+
+  # No Caddy locally (it can't issue a cert for perp.divpatel.me pointing at
+  # localhost), so publish these ports directly for local testing instead.
+  backend:
+    image: perp-backend:dev
+    build:
+      context: .
+      target: runtime
+      args:
+        APP: backend
+    ports:
+      - "${BACKEND_PORT:-3000}:${BACKEND_PORT:-3000}"
+
+  web-socket-server:
+    image: perp-web-socket-server:dev
+    build:
+      context: .
+      target: runtime
+      args:
+        APP: web-socket-server
+    ports:
+      - "${WS_PORT:-3001}:${WS_PORT:-3001}"
+
+  db-poller:
+    image: perp-db-poller:dev
+    build:
+      context: .
+      target: runtime
+      args:
+        APP: db-poller
+
+  price-feed:
+    image: perp-price-feed:dev
+    build:
+      context: .
+      target: runtime
+      args:
+        APP: price-feed

@@ -1,0 +1,7 @@
+api.perp.divpatel.me {
+    reverse_proxy backend:3000
+}
+
+ws.perp.divpatel.me {
+    reverse_proxy web-socket-server:3001
+}
