@@ -34,3 +34,7 @@ yarn-error.log*
 .DS_Store
 .vscode
 .idea
+.claude
+.codegraph
+.rtk
+.turbo
