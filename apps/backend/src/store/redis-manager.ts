@@ -7,9 +7,18 @@ export class RedisManager {
     private static instance: RedisManager;
 
     private constructor() {
-        this.publisher = createClient({ url: process.env.REDIS_URL });
+        this.publisher = createClient({
+            url: process.env.REDIS_URL,
+            socket: { reconnectStrategy: (retries) => Math.min(retries * 100, 3000) },
+        });
+        this.publisher.on("error", (err) => console.error("Redis publisher error:", err));
         this.publisher.connect();
-        this.receiver = createClient({ url: process.env.REDIS_URL });
+
+        this.receiver = createClient({
+            url: process.env.REDIS_URL,
+            socket: { reconnectStrategy: (retries) => Math.min(retries * 100, 3000) },
+        });
+        this.receiver.on("error", (err) => console.error("Redis receiver error:", err));
         this.receiver.connect();
     }
 
