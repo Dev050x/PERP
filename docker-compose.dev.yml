@@ -58,3 +58,9 @@ services:
       target: runtime
       args:
         APP: price-feed
+
+  market-maker:
+    image: perp-market-maker:dev
+    build:
+      context: .
+      target: market-maker

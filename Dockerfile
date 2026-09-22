@@ -1,4 +1,4 @@
-FROM oven/bun:1.3.14 AS pruner
+FROM oven/bun:1.3.14-alpine AS pruner
 WORKDIR /app
 COPY . .
 ARG APP
@@ -6,14 +6,14 @@ RUN test -n "$APP" || (echo "APP build-arg is required" >&2 && exit 1)
 RUN bunx turbo prune ${APP} --docker
 
 
-FROM oven/bun:1.3.14 AS deps
+FROM oven/bun:1.3.14-alpine AS deps
 WORKDIR /app
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/bun.lock ./bun.lock
 RUN bun install --frozen-lockfile
 
 
-FROM oven/bun:1.3.14 AS runtime
+FROM oven/bun:1.3.14-alpine AS runtime
 WORKDIR /app
 ARG APP
 
@@ -36,20 +36,20 @@ WORKDIR /app/apps/${APP}
 CMD ["bun", "run", "src/index.ts"]
 
 
-FROM oven/bun:1.3.14 AS pruner-db
+FROM oven/bun:1.3.14-alpine AS pruner-db
 WORKDIR /app
 COPY . .
 RUN bunx turbo prune db --docker
 
 
-FROM oven/bun:1.3.14 AS migrator-deps
+FROM oven/bun:1.3.14-alpine AS migrator-deps
 WORKDIR /app
 COPY --from=pruner-db /app/out/json/ .
 COPY --from=pruner-db /app/out/bun.lock ./bun.lock
 RUN bun install --frozen-lockfile
 
 
-FROM oven/bun:1.3.14 AS migrator
+FROM oven/bun:1.3.14-alpine AS migrator
 WORKDIR /app
 
 COPY --from=migrator-deps --chown=bun:bun /app /app
@@ -59,3 +59,10 @@ USER bun
 WORKDIR /app/packages/db
 
 CMD ["./node_modules/.bin/prisma", "migrate", "deploy"]
+
+
+FROM oven/bun:1.3.14-alpine AS market-maker
+WORKDIR /app
+COPY --chown=bun:bun market-maker.js .
+USER bun
+CMD ["bun", "run", "market-maker.js"]
