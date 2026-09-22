@@ -31,8 +31,58 @@ jobs:
       - name: Type check
         run: bun run check-types
 
+      # eslint-plugin-only-warn downgrades every rule to a warning, so this
+      # never fails the build -- it surfaces issues without blocking merges.
+      - name: Lint
+        run: bun run lint
+
+      - name: Format check
+        run: bun run format:check
+
       # apps/test imports engine internals directly and uses only bun:test +
       # pure functions -- no Redis, no Postgres, no service containers needed.
       - name: Unit + integration tests
         working-directory: apps/test
         run: bun test
+
+      # Informational only: known vulnerabilities are all transitive (via
+      # prisma's and eslint's own dependencies), not something a PR here can
+      # fix. continue-on-error keeps this visible without blocking merges.
+      - name: Dependency audit
+        continue-on-error: true
+        run: bun audit
+
+  docker-build:
+    # PR-only: deploy.yml's own build job already builds (and pushes) every
+    # image on push to main, so running this too there would just duplicate
+    # that work. This job exists to catch a broken Dockerfile before merge.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: backend,           target: runtime,      app: backend }
+          - { name: engine,            target: runtime,      app: engine }
+          - { name: db-poller,         target: runtime,      app: db-poller }
+          - { name: web-socket-server, target: runtime,      app: web-socket-server }
+          - { name: price-feed,        target: runtime,      app: price-feed }
+          - { name: migrate,           target: migrator,     app: "" }
+          - { name: market-maker,      target: market-maker, app: "" }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Build-only, never pushed -- this job exists purely to catch a broken
+      # Dockerfile/turbo-prune/Prisma-generate step before it reaches the
+      # deploy workflow, on every PR rather than only at deploy time.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: ${{ matrix.target }}
+          build-args: |
+            APP=${{ matrix.app }}
+          push: false
+          cache-from: type=gha,scope=perp-${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=perp-${{ matrix.name }}
