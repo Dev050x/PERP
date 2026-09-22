@@ -2,7 +2,6 @@ import type { EngineRequest } from "types/publisher";
 import { RedisManager } from "./store/redis-manager";
 import { CreateOrder, InitializeOrderBook } from "./controllers/create-order";
 import { CancelOrder } from "./controllers/cancel-order";
-import { debugState } from "./utils/debug";
 import { GetAllPositions, GetPosition } from "./controllers/get-position";
 import { getFill } from "./controllers/get-fills";
 import { markPrice } from "./controllers/mark-price";
@@ -86,7 +85,6 @@ while (1) {
       ok: true,
       data: response_data,
     });
-    debugState();
   } catch (error) {
     console.log("caught some error for user request", error);
     await RedisManager.getInstance().publishData({
