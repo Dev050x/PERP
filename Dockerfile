@@ -21,6 +21,13 @@ COPY --from=deps --chown=bun:bun /app /app
 COPY --from=pruner --chown=bun:bun /app/out/full/ .
 
 
+# Only backend/db-poller depend on packages/db (and therefore the Prisma
+# client); engine/price-feed/web-socket-server don't have that folder at
+# all after pruning, so skip generation for them.
+# Runs the installed binary directly rather than `bunx prisma`, so this step
+# has zero network dependency at build time (bunx prisma worked fine when
+# retested, but there's no reason to depend on registry reachability for a
+# package that's already installed).
 RUN if [ -d packages/db ]; then \
       cd packages/db \
       && DATABASE_URL="postgresql://postgres:1234@localhost:5432/postgres" \
