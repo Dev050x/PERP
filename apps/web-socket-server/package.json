@@ -5,11 +5,14 @@
   "private": true,
   "scripts": {
     "dev": "bun --watch src/index.ts",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "lint": "eslint ."
   },
   "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
     "@types/bun": "latest",
-    "@types/ws": "^8.18.1"
+    "@types/ws": "^8.18.1",
+    "eslint": "^9.39.1"
   },
   "peerDependencies": {
     "typescript": "^5"
