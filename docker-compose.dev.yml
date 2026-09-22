@@ -1,8 +1,14 @@
-# Local development / pre-AWS verification.
-# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
-# Builds every image locally instead of pulling from GHCR.
-
 services:
+  # Published only in dev, for connecting with psql/redis-cli/a GUI client
+  # from the host while testing. Production keeps these unpublished.
+  timescaledb:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
+
   migrate:
     image: perp-migrate:dev
     build:
@@ -17,8 +23,6 @@ services:
       args:
         APP: engine
 
-  # No Caddy locally (it can't issue a cert for perp.divpatel.me pointing at
-  # localhost), so publish these ports directly for local testing instead.
   backend:
     image: perp-backend:dev
     build:
