@@ -59,35 +59,29 @@ PERP is a low-latency, event-driven perpetual futures trading engine designed fo
 ### Components
 
 1. **Primary REST API Gateway (`apps/backend`)**
-
    - Handles REST API requests (Auth, Orders, Balance, Positions).
    - Routes write/execution requests to Redis Streams with unique correlation IDs and awaits responses.
    - Queries PostgreSQL directly for historical queries (candles, trades, orders) to unburden matching engine CPU.
 
 2. **Redis Streams Message Bus**
-
    - `REQUEST_STREAM`: Message queue for inbound order creations, cancellations, deposits, and withdrawals.
    - `MARK_PRICE_STREAM`: Oracle price updates from external feeds.
    - `RESPONSE_STREAM`: Event stream for matching engine outputs, trade fills, liquidations, and depth updates.
 
 3. **Matching & Risk Engine (`apps/engine`)**
-
    - Maintains in-memory order books and user balances.
    - Executes trades using price-time priority.
    - Manages position leverage, mark price recalculations, and auto-liquidations.
 
 4. **WebSocket Layer (`apps/web-socket-server`)**
-
    - Consumes market events from Redis Streams.
    - Streams live orderbook depth (`depth.<market>`), market trades (`trade.<market>`), and tickers to clients in real time.
 
 5. **Database Poller (`apps/db-poller`)**
-
    - Background worker consuming execution events from Redis Streams.
    - Batch inserts and updates orders, fills, positions, and candlestick data into PostgreSQL asynchronously.
 
 6. **Price Feed Oracle (`apps/price-feed`)**
-
    - Connects to external price sockets (e.g. Binance) and streams live mark prices into Redis Streams.
 
 ## API Endpoints
@@ -191,6 +185,7 @@ node market-maker.js
 ```
 
 What it does:
+
 - Registers market maker test accounts (`mm_trader_1` and `mm_trader_2`).
 - Funds accounts with test USDC balance via `/onramp`.
 - Continuously posts active two-sided limit orders across `SOL` and `ETH` markets.

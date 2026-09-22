@@ -2,63 +2,76 @@ import { createClient, type RedisClientType } from "redis";
 import type { EngineResponse } from "types/receiver";
 
 export class RedisManager {
-    private publisher: RedisClientType;
-    private receiver: RedisClientType;
-    private static instance: RedisManager;
-    private lastOffset: string;
+  private publisher: RedisClientType;
+  private receiver: RedisClientType;
+  private static instance: RedisManager;
+  private lastOffset: string;
 
-    private constructor() {
-        this.publisher = createClient({
-            url: process.env.REDIS_URL,
-            socket: { reconnectStrategy: (retries) => Math.min(retries * 100, 3000) },
-        });
-        this.publisher.on("error", (err) => console.error("Redis publisher error:", err));
-        this.publisher.connect();
+  private constructor() {
+    this.publisher = createClient({
+      url: process.env.REDIS_URL,
+      socket: { reconnectStrategy: (retries) => Math.min(retries * 100, 3000) },
+    });
+    this.publisher.on("error", (err) =>
+      console.error("Redis publisher error:", err),
+    );
+    this.publisher.connect();
 
-        this.receiver = createClient({
-            url: process.env.REDIS_URL,
-            socket: { reconnectStrategy: (retries) => Math.min(retries * 100, 3000) },
-        });
-        this.receiver.on("error", (err) => console.error("Redis receiver error:", err));
-        this.receiver.connect();
+    this.receiver = createClient({
+      url: process.env.REDIS_URL,
+      socket: { reconnectStrategy: (retries) => Math.min(retries * 100, 3000) },
+    });
+    this.receiver.on("error", (err) =>
+      console.error("Redis receiver error:", err),
+    );
+    this.receiver.connect();
 
-        this.lastOffset = "";
+    this.lastOffset = "";
+  }
+
+  public static getInstance() {
+    if (!this.instance) {
+      this.instance = new RedisManager();
     }
+    return this.instance;
+  }
 
-    public static getInstance() {
-        if (!this.instance) {
-            this.instance = new RedisManager();
-        }
-        return this.instance;
-    }
+  public getLastOffset() {
+    return this.lastOffset;
+  }
 
-    public getLastOffset() {
-        return this.lastOffset;
-    }
+  public setLastOffset(offset: string) {
+    this.lastOffset = offset;
+  }
 
-    public setLastOffset(offset: string) {
-        this.lastOffset = offset;
-    }
+  public readDataFromStream(lastId: string) {
+    const item = this.receiver.xRead(
+      { key: "backend-to-engine", id: lastId },
+      { BLOCK: 5000, COUNT: 1 },
+    );
+    return item;
+  }
 
-    public readDataFromStream(lastId: string) {
-        const item = this.receiver.xRead({ key: "backend-to-engine", id: lastId }, { BLOCK: 5000, COUNT: 1 });
-        return item;
-    }
+  public async readMissedMessages(afterId: string) {
+    const items = await this.receiver.xRange(
+      "backend-to-engine",
+      `(${afterId}`,
+      "+",
+    );
+    return items;
+  }
 
-    public async readMissedMessages(afterId: string) {
-        const items = await this.receiver.xRange("backend-to-engine", `(${afterId}`, "+");
-        return items;
-    }
+  public publishData(data: EngineResponse) {
+    this.publisher.xAdd("engine-to-backend", "*", {
+      message: JSON.stringify(data),
+    });
+  }
 
-    public publishData(data: EngineResponse) {
-        this.publisher.xAdd("engine-to-backend", "*", {
-            message: JSON.stringify(data),
-        });
-    }
-
-    public async getLastPublishedCorrelationId(): Promise<string | undefined> {
-        const last = await this.receiver.xRevRange("engine-to-backend", "+", "-", { COUNT: 1 });
-        if (!last || last.length === 0) return undefined;
-        return last[0]!.message["correlationId"];
-    }
+  public async getLastPublishedCorrelationId(): Promise<string | undefined> {
+    const last = await this.receiver.xRevRange("engine-to-backend", "+", "-", {
+      COUNT: 1,
+    });
+    if (!last || last.length === 0) return undefined;
+    return last[0]!.message["correlationId"];
+  }
 }

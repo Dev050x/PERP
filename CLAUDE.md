@@ -58,6 +58,7 @@ Each app's `RedisManager` (`src/store/redis-manager.ts` or similar per app) wrap
 - After doing every change, run `bun run build` to ensure there is no errors.
 
 <!-- rtk-instructions v2 -->
+
 # Command output
 
 Command output here is condensed to save tokens, keeping every signal and
@@ -66,4 +67,5 @@ normally, and batch related commands into one call to avoid extra turns.
 Truncated results state their recovery path in their own output. Re-run a
 command as `rtk proxy <cmd>` only when its result is unusable: empty when
 output was clearly expected, contradicting its exit code, or garbled.
+
 <!-- /rtk-instructions -->

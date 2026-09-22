@@ -1,4 +1,8 @@
-import express, { type NextFunction, type Request, type Response } from "express";
+import express, {
+  type NextFunction,
+  type Request,
+  type Response,
+} from "express";
 import { env } from "./utils/env";
 import cors from "cors";
 import { authRouter } from "./routes/auth.routes";
@@ -12,22 +16,21 @@ app.use(cors());
 void listeningForEngineResponse();
 
 app.get("/api/v1/health", (_req, res) => {
-    res.status(200).json({
-        ok: true
-    })
+  res.status(200).json({
+    ok: true,
+  });
 });
-
 
 app.use("/api/v1", authRouter);
 app.use("/api/v1", exchangeRouter);
 
 app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
-    console.log(err);
-    res.status(500).json({
-        error: err instanceof Error ? err.message : "internal server error"
-    });
+  console.log(err);
+  res.status(500).json({
+    error: err instanceof Error ? err.message : "internal server error",
+  });
 });
 
 app.listen(env.port, () => {
-    console.log(`server is running on Port No. ${env.port}`);
-})
+  console.log(`server is running on Port No. ${env.port}`);
+});

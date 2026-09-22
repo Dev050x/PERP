@@ -1,6 +1,10 @@
 import { prisma } from "db";
 import type { CreateOrderResponseData } from "types/receiver";
-import type { orderStatus, side, type } from "../../../packages/db/generated/prisma/enums";
+import type {
+  orderStatus,
+  side,
+  type,
+} from "../../../packages/db/generated/prisma/enums";
 import { updateCandles } from "./create-candle";
 
 export async function createOrder(data: CreateOrderResponseData) {

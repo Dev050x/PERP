@@ -1,30 +1,31 @@
 import { createClient, RedisClient, type RedisClientType } from "redis";
 
 export class RedisManager {
-    private static instance: RedisManager;
-    private receiver: RedisClientType;
+  private static instance: RedisManager;
+  private receiver: RedisClientType;
 
-    private constructor() {
-        this.receiver = createClient({
-            url: process.env.REDIS_URL,
-            socket: { reconnectStrategy: (retries) => Math.min(retries * 100, 3000) },
-        });
-        this.receiver.on("error", (err) => console.error("Redis receiver error:", err));
-        this.receiver.connect();
+  private constructor() {
+    this.receiver = createClient({
+      url: process.env.REDIS_URL,
+      socket: { reconnectStrategy: (retries) => Math.min(retries * 100, 3000) },
+    });
+    this.receiver.on("error", (err) =>
+      console.error("Redis receiver error:", err),
+    );
+    this.receiver.connect();
+  }
+
+  public static getInstance() {
+    if (!this.instance) {
+      this.instance = new RedisManager();
     }
+    return this.instance;
+  }
 
-    public static getInstance() {
-        if (!this.instance) {
-            this.instance = new RedisManager();
-        }
-        return this.instance;
-    }
-
-    public readMsg() {
-        return this.receiver.xRead(
-            { key: "engine-to-backend", id: '$' },
-            { BLOCK: 5000, COUNT: 1 }
-        )
-    }
-
+  public readMsg() {
+    return this.receiver.xRead(
+      { key: "engine-to-backend", id: "$" },
+      { BLOCK: 5000, COUNT: 1 },
+    );
+  }
 }
