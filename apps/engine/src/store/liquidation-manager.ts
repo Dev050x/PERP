@@ -104,7 +104,7 @@ export class LiquidationManager {
         ...this.liquidationLongs.get(market)?.entries()!,
       ]) {
         if (price > liqPrice) {
-          break;
+          continue;
         }
         // we need to delete the user position
         for (const userId of [...userIdS]) {
@@ -129,7 +129,7 @@ export class LiquidationManager {
         ...this.liquidationShorts.get(market)?.entriesReversed()!,
       ]) {
         if (price < liqPrice) {
-          break;
+          continue;
         }
         // we need to delete the user position
         for (const userId of [...userIdS]) {
