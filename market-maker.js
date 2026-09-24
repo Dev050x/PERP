@@ -5,8 +5,7 @@
  *  and places live quotes + market trades across SOL & ETH.
  * ============================================================
  */
-
-const BASE_URL = process.env.API_URL || "http://localhost:8080/api/v1";
+const BASE_URL = process.env.API_URL || "http://localhost:3000/api/v1";
 
 const MARKETS = {
   SOL: { min: 130, max: 160, mid: 145, qtyMin: 0.5, qtyMax: 5.0, priceDec: 2, qtyDec: 2 },

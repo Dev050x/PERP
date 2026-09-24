@@ -10,9 +10,9 @@
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
-    "prettier": "^3.7.4",
-    "turbo": "^2.9.14",
-    "typescript": "5.9.2"
+    "prettier": "^3.9.9",
+    "turbo": "^2.11.3",
+    "typescript": "7.0.2"
   },
   "engines": {
     "node": ">=18"
@@ -23,6 +23,6 @@
     "packages/*"
   ],
   "dependencies": {
-    "zod": "^4.4.3"
+    "zod": "^4.6.5"
   }
 }

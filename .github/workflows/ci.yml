@@ -19,9 +19,6 @@ jobs:
       - name: Install workspace
         run: bun install --frozen-lockfile
 
-      # packages/db/index.ts imports the generated Prisma client, which is
-      # gitignored (packages/db/.gitignore) and must be regenerated here.
-      # prisma generate never opens a DB connection, so a placeholder URL is fine.
       - name: Generate Prisma client
         working-directory: packages/db
         env:
@@ -31,31 +28,22 @@ jobs:
       - name: Type check
         run: bun run check-types
 
-      # eslint-plugin-only-warn downgrades every rule to a warning, so this
-      # never fails the build -- it surfaces issues without blocking merges.
       - name: Lint
         run: bun run lint
 
       - name: Format check
         run: bun run format:check
 
-      # apps/test imports engine internals directly and uses only bun:test +
-      # pure functions -- no Redis, no Postgres, no service containers needed.
       - name: Unit + integration tests
         working-directory: apps/test
         run: bun test
 
-      # Informational only: known vulnerabilities are all transitive (via
-      # prisma's and eslint's own dependencies), not something a PR here can
-      # fix. continue-on-error keeps this visible without blocking merges.
       - name: Dependency audit
         continue-on-error: true
         run: bun audit
 
   docker-build:
-    # PR-only: deploy.yml's own build job already builds (and pushes) every
-    # image on push to main, so running this too there would just duplicate
-    # that work. This job exists to catch a broken Dockerfile before merge.
+    
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     strategy:
@@ -74,9 +62,7 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
-      # Build-only, never pushed -- this job exists purely to catch a broken
-      # Dockerfile/turbo-prune/Prisma-generate step before it reaches the
-      # deploy workflow, on every PR rather than only at deploy time.
+
       - uses: docker/build-push-action@v6
         with:
           context: .

@@ -124,9 +124,6 @@ services:
       redis:
         condition: service_healthy
 
-  # Simulates two traders continuously quoting SOL/ETH so the live demo
-  # never shows an empty order book. Talks to `backend` over the internal
-  # network, not localhost -- API_URL overrides the script's own default.
   market-maker:
     image: ghcr.io/${GHCR_OWNER}/perp-market-maker:${IMAGE_TAG:-latest}
     restart: unless-stopped
