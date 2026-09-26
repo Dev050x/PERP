@@ -56,7 +56,6 @@ jobs:
           - { name: web-socket-server, target: runtime,      app: web-socket-server }
           - { name: price-feed,        target: runtime,      app: price-feed }
           - { name: migrate,           target: migrator,     app: "" }
-          - { name: market-maker,      target: market-maker, app: "" }
     steps:
       - uses: actions/checkout@v4
 

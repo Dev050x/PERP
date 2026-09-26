@@ -66,10 +66,3 @@ USER bun
 WORKDIR /app/packages/db
 
 CMD ["./node_modules/.bin/prisma", "migrate", "deploy"]
-
-
-FROM oven/bun:1.3.14-alpine AS market-maker
-WORKDIR /app
-COPY --chown=bun:bun market-maker.js .
-USER bun
-CMD ["bun", "run", "market-maker.js"]

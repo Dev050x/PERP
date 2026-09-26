@@ -124,15 +124,6 @@ services:
       redis:
         condition: service_healthy
 
-  market-maker:
-    image: ghcr.io/${GHCR_OWNER}/perp-market-maker:${IMAGE_TAG:-latest}
-    restart: unless-stopped
-    environment:
-      API_URL: http://backend:${BACKEND_PORT}/api/v1
-    depends_on:
-      backend:
-        condition: service_healthy
-
 volumes:
   timescale-data:
   redis-data:
