@@ -42,4 +42,6 @@ yarn-error.log*
 .claude
 
 market-maker.js
+seed-candles.js
 API.md
+seed-candles.js
