@@ -40,3 +40,6 @@ yarn-error.log*
 .CLAUDE.md
 .rtk
 .claude
+
+market-maker.js
+API.md

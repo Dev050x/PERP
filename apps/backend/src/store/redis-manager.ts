@@ -5,6 +5,7 @@ export class RedisManager {
   private publisher: RedisClientType;
   private receiver: RedisClientType;
   private static instance: RedisManager;
+  private lastId = "$";
 
   private constructor() {
     this.publisher = createClient({
@@ -40,9 +41,14 @@ export class RedisManager {
   }
 
   public async readMessage() {
-    return this.receiver.xRead(
-      { key: "engine-to-backend", id: "$" },
+    const item = await this.receiver.xRead(
+      { key: "engine-to-backend", id: this.lastId },
       { BLOCK: 5000, COUNT: 1 },
     );
+    const entryId = item?.[0]?.messages?.[0]?.id;
+    if (entryId) {
+      this.lastId = entryId;
+    }
+    return item;
   }
 }

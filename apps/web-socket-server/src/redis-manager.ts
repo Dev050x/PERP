@@ -3,6 +3,7 @@ import { createClient, type RedisClientType } from "redis";
 export class RedisManager {
   private static instance: RedisManager;
   private receiver: RedisClientType;
+  private lastId = "$";
   private constructor() {
     this.receiver = createClient({
       url: process.env.REDIS_URL,
@@ -21,10 +22,15 @@ export class RedisManager {
     return this.instance;
   }
 
-  public readMesage() {
-    return this.receiver.xRead(
-      { key: "engine-to-backend", id: "$" },
+  public async readMesage() {
+    const item = await this.receiver.xRead(
+      { key: "engine-to-backend", id: this.lastId },
       { BLOCK: 5000, COUNT: 1 },
     );
+    const entryId = item?.[0]?.messages?.[0]?.id;
+    if (entryId) {
+      this.lastId = entryId;
+    }
+    return item;
   }
 }

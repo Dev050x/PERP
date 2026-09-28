@@ -22,6 +22,7 @@ interface Depth {
 }
 
 let depth: Depth = {};
+let broadcastStarted = false;
 
 ws.on("connection", (socket) => {
   socket.on("message", (msg) => {
@@ -33,7 +34,10 @@ ws.on("connection", (socket) => {
         socket: socket,
         id: parsed_msg.id,
       });
-      createInterval();
+      if (!broadcastStarted) {
+        broadcastStarted = true;
+        createInterval();
+      }
     }
     if (parsed_msg.msg === "UNSUBSCRIBE") {
       const index = sockets.findIndex((socket) => socket.id === parsed_msg.id);
@@ -78,7 +82,7 @@ function handleResponse(data: EngineResponse) {
       asks: depth_data.asks,
     };
   } else if (data.msg === "CancelOrder") {
-    let depth_data = data.data.depth;
+    let depth_data = data.data.depth.depth;
     let market = data.data.order.market;
 
     depth[market] = {
